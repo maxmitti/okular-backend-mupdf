@@ -42,7 +42,7 @@ kcoreaddons_add_plugin(okularGenerator_mupdf
 target_link_libraries(okularGenerator_mupdf
     Okular::Core
     KF5::I18n
-    mupdf
+    mupdf mupdfthird
     ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${JBIG2DEC_LIBRARIES}
     ${JPEG_LIBRARIES} ${OPENJPEG2_LIBRARIES} ${OPENSSL_LIBRARIES}
 )
