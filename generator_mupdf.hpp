@@ -25,13 +25,9 @@ class MuPDFGenerator : public Okular::Generator {
 public:
     MuPDFGenerator(QObject *parent, const QVariantList &args);
     virtual ~MuPDFGenerator();
-#if OKULAR_IS_VERSION(0, 20, 0)
     Okular::Document::OpenResult loadDocumentWithPassword(
         const QString &fileName, QVector<Okular::Page *> &pages,
         const QString &password);
-#else
-    bool loadDocument(const QString &fileName, QVector<Okular::Page*> &pages);
-#endif
     Okular::DocumentInfo generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const;
     const Okular::DocumentSynopsis *generateDocumentSynopsis();
     QVariant metaData(const QString &key, const QVariant &option) const;

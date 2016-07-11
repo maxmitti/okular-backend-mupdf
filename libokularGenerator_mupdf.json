@@ -1,0 +1,26 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "pino@kde.org",
+                "Name": "Pino Toscano"
+            }
+        ],
+        "Copyright": "© 2008 Pino Toscano",
+        "Description": "A PDF backend based on the MuPDF library",
+        "Id": "okular_mupdf",
+        "License": "GPL",
+        "MimeTypes": [
+            "application/pdf",
+            "application/x-pdf"
+        ],
+        "Name": "MuPDF Backend",
+        "ServiceTypes": [
+            "okular/Generator"
+        ],
+        "Version": "0.1"
+    },
+    "X-KDE-Priority": 1,
+    "X-KDE-okularAPIVersion": 1,
+    "X-KDE-okularHasInternalSettings": false
+}

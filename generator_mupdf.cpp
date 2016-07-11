@@ -12,15 +12,12 @@
 #include <qimage.h>
 #include <qmutex.h>
 
-#include <kaboutdata.h>
-#include <kdebug.h>
-#include <kglobal.h>
-#include <klocale.h>
-#include <kpassworddialog.h>
-#include <kwallet.h>
+#include <klocalizedstring.h>
 
 #include <okular/core/page.h>
 #include <okular/core/textpage.h>
+
+OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
 
 static const int MuPDFDebug = 4716;
 
@@ -85,24 +82,6 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
     }
 }
 
-static KAboutData createAboutData()
-{
-    KAboutData aboutData(
-        "okular_mupdf",
-        "okular_mupdf",
-        ki18n("MuPDF Backend"),
-        "0.1",
-        ki18n("A PDF backend based on the MuPDF library"),
-        KAboutData::License_GPL,
-        ki18n("© 2008 Pino Toscano")
-    );
-    aboutData.addAuthor(ki18n("Pino Toscano"),
-                        KLocalizedString(), "pino@kde.org");
-    return aboutData;
-}
-
-OKULAR_EXPORT_PLUGIN(MuPDFGenerator, createAboutData())
-
 MuPDFGenerator::MuPDFGenerator(QObject *parent, const QVariantList &args)
     : Generator(parent, args)
     , m_docSyn(0)
@@ -116,7 +95,6 @@ MuPDFGenerator::~MuPDFGenerator()
 {
 }
 
-#if OKULAR_IS_VERSION(0, 20, 0)
 Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
     const QString &fileName, QVector<Okular::Page*> &pages,
     const QString &password)
@@ -142,94 +120,6 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
     }
     else return Okular::Document::OpenError;
 }
-#else
-bool MuPDFGenerator::loadDocument(const QString &filePath,
-                                  QVector<Okular::Page*> &pages)
-{
-    if (!m_pdfdoc.load(filePath))
-        return false;
-    bool success = init(pages, filePath.section('/', -1, -1));
-    if (success)
-    {
-        // no need to check for the existence of a synctex file, no parser will 
-        // be created if none exists
-        initSynctexParser(filePath);
-    }
-    return success;
-}
-    
-bool MuPDFGenerator::init(QVector<Okular::Page *> &pages, const QString &wkey)
-{
-    // if the file didn't open correctly it might be encrypted, so ask for a pass
-    bool firstInput = true;
-    bool triedWallet = false;
-    KWallet::Wallet *wallet = 0;
-    bool keep = true;
-    while (m_pdfdoc.isLocked()) {
-        QString password;
-
-        // 1.A. try to retrieve the first password from the kde wallet system
-        if (!triedWallet && !wkey.isNull()) {
-            QString walletName = KWallet::Wallet::NetworkWallet();
-            WId parentwid = 0;
-            if (document() && document()->widget()) {
-                parentwid = document()->widget()->effectiveWinId();
-            }
-            wallet = KWallet::Wallet::openWallet(walletName, parentwid);
-            if (wallet) {
-                // use the Okular folder (and create if missing)
-                if (!wallet->hasFolder("Okular")) {
-                    wallet->createFolder("Okular");
-                }
-                wallet->setFolder("Okular");
-
-                // look for the pass in that folder
-                QString retrievedPass;
-                if (!wallet->readPassword(wkey, retrievedPass)) {
-                    password = retrievedPass;
-                }
-            }
-            triedWallet = true;
-        }
-
-        // 1.B. if not retrieved, ask the password using the kde password dialog
-        if (password.isNull()) {
-            QString prompt;
-            prompt = !firstInput ? i18n("Incorrect password. Try again:")
-                   : i18n("Please insert the password to read the document:");
-            firstInput = false;
-
-            // if the user presses cancel, abort opening
-            KPasswordDialog dlg(document()->widget(),
-                                wallet ? KPasswordDialog::ShowKeepPassword
-                                       : KPasswordDialog::KPasswordDialogFlags());
-            dlg.setCaption(i18n("Document Password"));
-            dlg.setPrompt(prompt);
-            if (!dlg.exec())
-                break;
-            password = dlg.password();
-            if (wallet)
-                keep = dlg.keepPassword();
-        }
-
-        // 2. reopen the document using the password
-        m_pdfdoc.unlock(password.toLatin1());
-
-        // 3. if the password is correct and the user chose to remember it, store it to the wallet
-        if (!m_pdfdoc.isLocked() && wallet
-                && /*safety check*/ wallet->isOpen() && keep)
-            wallet->writePassword(wkey, password);
-    }
-    if (m_pdfdoc.isLocked()) {
-        m_pdfdoc.close();
-        return false;
-    }
-
-    loadPages(pages);
-
-    return true;
-}
-#endif
 
 bool MuPDFGenerator::doCloseDocument()
 {
@@ -456,5 +346,3 @@ QVariant MuPDFGenerator::metaData(const QString &key,
     }
     return QVariant();
 }
-
-#include "generator_mupdf.moc"

@@ -1,24 +1,28 @@
 project(okular-mupdf)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.12)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(OPENJPEG2 REQUIRED libopenjp2)
 pkg_check_modules(OPENSSL REQUIRED openssl)
 
-find_package(KDE4 REQUIRED)
-find_package(Okular REQUIRED)
+find_package(ECM 5.19.0 CONFIG REQUIRED)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH})
+include(FeatureSummary)
+include(KDEInstallDirs)
+
+#TODO: find libmupdf with cmake
+find_package(Okular5 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(jbig2dec REQUIRED)
 find_package(JPEG REQUIRED)
 
-include_directories(
-  ${KDE4_INCLUDES} ${QT_INCLUDES}
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${OKULAR_INCLUDE_DIR}
-)
+find_package(KF5 REQUIRED COMPONENTS
+    CoreAddons
+    I18n
+    )
 
 set(okularGenerator_mupdf_SRCS
   document.cpp
@@ -28,17 +32,18 @@ set(okularGenerator_mupdf_SRCS
   synctex/synctex_parser_utils.c
 )
 
-kde4_add_plugin(okularGenerator_mupdf ${okularGenerator_mupdf_SRCS})
+kcoreaddons_add_plugin(okularGenerator_mupdf
+    JSON libokularGenerator_mupdf.json
+    INSTALL_NAMESPACE "okular/generators"
+    SOURCES ${okularGenerator_mupdf_SRCS}
+    )
 
 target_link_libraries(okularGenerator_mupdf
-	${OKULAR_LIBRARIES} ${KDE4_KDEUI_LIBS} ${QT_QTXML_LIBRARY}
-	mupdf mujs
-	${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${JBIG2DEC_LIBRARIES}
-	${JPEG_LIBRARIES} ${OPENJPEG2_LIBRARIES} ${OPENSSL_LIBRARIES}
+    Okular::Core
+    KF5::I18n
+    mupdf
+    ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${JBIG2DEC_LIBRARIES}
+    ${JPEG_LIBRARIES} ${OPENJPEG2_LIBRARIES} ${OPENSSL_LIBRARIES}
 )
 
-install(TARGETS okularGenerator_mupdf DESTINATION ${PLUGIN_INSTALL_DIR})
-
-install(FILES libokularGenerator_mupdf.desktop okularMupdf.desktop DESTINATION ${SERVICES_INSTALL_DIR})
-install(FILES okularApplication_mupdf.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
-
+feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
