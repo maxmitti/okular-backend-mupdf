@@ -346,3 +346,5 @@ QVariant MuPDFGenerator::metaData(const QString &key,
     }
     return QVariant();
 }
+
+#include "generator_mupdf.moc"
