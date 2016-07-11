@@ -20,8 +20,11 @@
 
 #include "document.hpp"
 
-class MuPDFGenerator : public Okular::Generator {
+class MuPDFGenerator : public Okular::Generator
+{
     Q_OBJECT
+    Q_INTERFACES( Okular::Generator )
+
 public:
     MuPDFGenerator(QObject *parent, const QVariantList &args);
     virtual ~MuPDFGenerator();

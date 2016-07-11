@@ -11,8 +11,8 @@
         "Id": "okular_mupdf",
         "License": "GPL",
         "MimeTypes": [
-            "application/pdf",
-            "application/x-pdf"
+            "application/x-pdf",
+            "application/pdf"
         ],
         "Name": "MuPDF Backend",
         "ServiceTypes": [
@@ -22,5 +22,5 @@
     },
     "X-KDE-Priority": 1,
     "X-KDE-okularAPIVersion": 1,
-    "X-KDE-okularHasInternalSettings": false
+    "X-KDE-okularHasInternalSettings": true
 }

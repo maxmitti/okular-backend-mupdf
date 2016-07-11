@@ -21,67 +21,6 @@ OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
 
 static const int MuPDFDebug = 4716;
 
-static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox*> &boxes,
-                                       qreal width, qreal height)
-{
-    Okular::TextPage *ktp = new Okular::TextPage();
-    for (int i = 0; i < boxes.size(); ++i) {
-        QMuPDF::TextBox *box = boxes.at(i);
-        const QChar c = box->text();
-        const QRectF charBBox = box->rect();
-        QString text(c);
-        if (box->isAtEndOfLine()) {
-            text.append('\n');
-        }
-        ktp->append(text, new Okular::NormalizedRect(
-                        charBBox.left() / width, charBBox.top() / height,
-                        charBBox.right() / width, charBBox.bottom() / height));
-    }
-    return ktp;
-}
-
-static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
-                             QDomNode &parentDestination, const QSizeF &dpi)
-{
-    foreach (QMuPDF::Outline *child, outline->children()) {
-        QDomElement newel = mainDoc.createElement(child->title());
-        parentDestination.appendChild(newel);
-        if (child->isOpen())
-            newel.setAttribute("Open", "true");
-        QMuPDF::LinkDest *link = child->link();
-        if (!link)
-            continue;
-        switch (link->type()) {
-        case QMuPDF::LinkDest::Goto: {
-            QMuPDF::GotoDest *dest = static_cast<QMuPDF::GotoDest*>(link);
-            Okular::DocumentViewport vp(dest->page());
-            vp.rePos.pos = Okular::DocumentViewport::TopLeft;
-            const QPointF p = dest->rect(dpi).topLeft();
-            vp.rePos.normalizedX = p.x();
-            vp.rePos.normalizedY = p.y();
-            vp.rePos.enabled = true;
-            newel.setAttribute("Viewport", vp.toString());
-            break;
-        } case QMuPDF::LinkDest::Named: {
-            QMuPDF::NamedDest *dest = static_cast<QMuPDF::NamedDest*>(link);
-            newel.setAttribute("ViewportName", dest->name());
-            break;
-        } case QMuPDF::LinkDest::Url: {
-            QMuPDF::UrlDest *dest = static_cast<QMuPDF::UrlDest*>(link);
-            newel.setAttribute("DestinationURI", dest->address());
-            break;
-        }
-        case QMuPDF::LinkDest::External:
-        case QMuPDF::LinkDest::Launch:
-            // not implemented
-            break;
-        default:
-            break;
-        }
-        recurseCreateTOC(mainDoc, child, newel, dpi);
-    }
-}
-
 MuPDFGenerator::MuPDFGenerator(QObject *parent, const QVariantList &args)
     : Generator(parent, args)
     , m_docSyn(0)
@@ -178,6 +117,49 @@ Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::Doc
     userMutex()->unlock();
     return info;
 }
+
+static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
+                             QDomNode &parentDestination, const QSizeF &dpi)
+{
+    foreach (QMuPDF::Outline *child, outline->children()) {
+        QDomElement newel = mainDoc.createElement(child->title());
+        parentDestination.appendChild(newel);
+        if (child->isOpen())
+            newel.setAttribute("Open", "true");
+        QMuPDF::LinkDest *link = child->link();
+        if (!link)
+            continue;
+        switch (link->type()) {
+        case QMuPDF::LinkDest::Goto: {
+            QMuPDF::GotoDest *dest = static_cast<QMuPDF::GotoDest*>(link);
+            Okular::DocumentViewport vp(dest->page());
+            vp.rePos.pos = Okular::DocumentViewport::TopLeft;
+            const QPointF p = dest->rect(dpi).topLeft();
+            vp.rePos.normalizedX = p.x();
+            vp.rePos.normalizedY = p.y();
+            vp.rePos.enabled = true;
+            newel.setAttribute("Viewport", vp.toString());
+            break;
+        } case QMuPDF::LinkDest::Named: {
+            QMuPDF::NamedDest *dest = static_cast<QMuPDF::NamedDest*>(link);
+            newel.setAttribute("ViewportName", dest->name());
+            break;
+        } case QMuPDF::LinkDest::Url: {
+            QMuPDF::UrlDest *dest = static_cast<QMuPDF::UrlDest*>(link);
+            newel.setAttribute("DestinationURI", dest->address());
+            break;
+        }
+        case QMuPDF::LinkDest::External:
+        case QMuPDF::LinkDest::Launch:
+            // not implemented
+            break;
+        default:
+            break;
+        }
+        recurseCreateTOC(mainDoc, child, newel, dpi);
+    }
+}
+
 
 const Okular::DocumentSynopsis* MuPDFGenerator::generateDocumentSynopsis()
 {
@@ -298,6 +280,25 @@ void MuPDFGenerator::fillViewportFromSourceReference (Okular::DocumentViewport
             return;
         }
     }
+}
+
+static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox*> &boxes,
+                                       qreal width, qreal height)
+{
+    Okular::TextPage *ktp = new Okular::TextPage();
+    for (int i = 0; i < boxes.size(); ++i) {
+        QMuPDF::TextBox *box = boxes.at(i);
+        const QChar c = box->text();
+        const QRectF charBBox = box->rect();
+        QString text(c);
+        if (box->isAtEndOfLine()) {
+            text.append('\n');
+        }
+        ktp->append(text, new Okular::NormalizedRect(
+                        charBBox.left() / width, charBBox.top() / height,
+                        charBBox.right() / width, charBBox.bottom() / height));
+    }
+    return ktp;
 }
 
 Okular::TextPage* MuPDFGenerator::textPage(Okular::Page *page)
