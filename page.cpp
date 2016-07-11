@@ -118,14 +118,14 @@ QImage Page::render(qreal width, qreal height) const
 QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
 {
     fz_cookie cookie = { 0, 0, 0, 0, 0, 0 };
-    fz_text_page *page = fz_new_text_page(d->ctx);
-    fz_text_sheet *sheet = fz_new_text_sheet(d->ctx);
-    fz_device *device = fz_new_text_device(d->ctx, sheet, page);
+    fz_stext_page *page = fz_new_stext_page(d->ctx);
+    fz_stext_sheet *sheet = fz_new_stext_sheet(d->ctx);
+    fz_device *device = fz_new_stext_device(d->ctx, sheet, page);
     fz_run_page(d->ctx, d->page, device, &fz_identity, &cookie);
     fz_drop_device(d->ctx, device);
     if (cookie.errors) {
-        fz_drop_text_page(d->ctx, page);
-        fz_drop_text_sheet(d->ctx, sheet);
+        fz_drop_stext_page(d->ctx, page);
+        fz_drop_stext_sheet(d->ctx, sheet);
         return QVector<TextBox *>();
     }
 
@@ -134,14 +134,14 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     for (int i_block = 0; i_block < page->len; ++i_block) {
         if (page->blocks[i_block].type != FZ_PAGE_BLOCK_TEXT)
             continue;
-        fz_text_block &block = *page->blocks[i_block].u.text;
+        fz_stext_block &block = *page->blocks[i_block].u.text;
         for (int i_line = 0; i_line < block.len; ++i_line) {
-            fz_text_line &line = block.lines[i_line];
+            fz_stext_line &line = block.lines[i_line];
             bool hasText = false;
-            for (fz_text_span *s = line.first_span; s; s = s->next) {
-                fz_text_span &span = *s;
+            for (fz_stext_span *s = line.first_span; s; s = s->next) {
+                fz_stext_span &span = *s;
                 for (int i_char = 0; i_char < span.len; ++i_char) {
-                    fz_rect bbox; fz_text_char_bbox(d->ctx, &bbox, s, i_char);
+                    fz_rect bbox; fz_stext_char_bbox(d->ctx, &bbox, s, i_char);
                     const int text = span.text[i_char].c;
                     TextBox *box = new TextBox(text, convert_fz_rect(bbox, dpi));
                     boxes.append(box);
@@ -153,8 +153,8 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
         }
     }
 
-    fz_drop_text_page(d->ctx, page);
-    fz_drop_text_sheet(d->ctx, sheet);
+    fz_drop_stext_page(d->ctx, page);
+    fz_drop_stext_sheet(d->ctx, sheet);
 
     return boxes;
 }
