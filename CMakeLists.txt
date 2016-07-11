@@ -11,6 +11,7 @@ find_package(ECM 5.19.0 CONFIG REQUIRED)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH})
 include(FeatureSummary)
 include(KDEInstallDirs)
+include(KDECMakeSettings)
 
 #TODO: find libmupdf with cmake
 find_package(Okular5 REQUIRED)
@@ -33,7 +34,7 @@ set(okularGenerator_mupdf_SRCS
 )
 
 kcoreaddons_add_plugin(okularGenerator_mupdf
-    JSON libokularGenerator_mupdf.json
+    JSON "libokularGenerator_mupdf.json"
     INSTALL_NAMESPACE "okular/generators"
     SOURCES ${okularGenerator_mupdf_SRCS}
     )
