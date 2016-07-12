@@ -10,11 +10,14 @@
 #ifndef QMUPDF_PAGE_HPP
 #define QMUPDF_PAGE_HPP
 
-#include <QtCore/QString>
-#include <QtCore/QRect>
+#include <QRect>
+#include <QString>
 
-class QImage;                           class QSizeF;
-struct fz_document_s;                   struct fz_context_s;
+class QImage;
+class QSizeF;
+
+struct fz_document_s;
+struct fz_context_s;
 
 namespace QMuPDF {
 

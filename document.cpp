@@ -9,12 +9,14 @@
 
 #include "document.hpp"
 #include "page.hpp"
-#include <QtCore/QFile>
-#include <cstring>
+
 extern "C" {
-#include <mupdf/fitz.h>
 #include <mupdf/pdf.h>
 }
+
+#include <QFile>
+
+#include <cstring>
 
 namespace QMuPDF {
 

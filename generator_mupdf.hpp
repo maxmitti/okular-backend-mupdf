@@ -10,15 +10,14 @@
 #ifndef GENERATOR_MUPDF_H
 #define GENERATOR_MUPDF_H
 
+#include "document.hpp"
+
 #include "synctex/synctex_parser.h"
 
 #include <okular/core/document.h>
 #include <okular/core/generator.h>
 #include <okular/core/sourcereference.h>
 #include <okular/core/version.h>
-#include <qfile.h>
-
-#include "document.hpp"
 
 class MuPDFGenerator : public Okular::Generator
 {

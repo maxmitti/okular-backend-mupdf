@@ -9,13 +9,15 @@
 
 #include "generator_mupdf.hpp"
 #include "page.hpp"
-#include <qimage.h>
-#include <qmutex.h>
-
-#include <klocalizedstring.h>
 
 #include <okular/core/page.h>
 #include <okular/core/textpage.h>
+
+#include <KLocalizedString>
+
+#include <QFile>
+#include <QImage>
+#include <QMutex>
 
 OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
 

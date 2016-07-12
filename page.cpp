@@ -8,10 +8,12 @@
  ***************************************************************************/
 
 #include "page.hpp"
-#include <QtGui/QImage>
+
 extern "C" {
 #include <mupdf/fitz.h>
 }
+
+#include <QImage>
 
 namespace QMuPDF {
 

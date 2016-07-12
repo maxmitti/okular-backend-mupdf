@@ -10,18 +10,19 @@
 #ifndef QMUPDF_DOCUMENT_HPP
 #define QMUPDF_DOCUMENT_HPP
 
-#include <QtCore/QString>
-#include <QtCore/QVector>
-#include <QtAlgorithms>
-#include <okular/core/document.h>
 extern "C" {
 #include <mupdf/fitz.h>
-#include <mupdf/pdf.h>
 }
+
+#include <okular/core/document.h>
+
+#include <QString>
+#include <QVector>
 
 namespace QMuPDF {
 
-class Page;                             class Outline;
+class Page;
+class Outline;
 
 class Document {
 public:
