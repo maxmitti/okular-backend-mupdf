@@ -24,7 +24,6 @@ OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
 MuPDFGenerator::MuPDFGenerator(QObject *parent, const QVariantList &args)
     : Generator(parent, args)
     , m_synopsis(0)
-    , m_synctextScanner(0)
 {
     setFeature(Threaded);
     setFeature(TextExtraction);
@@ -59,9 +58,6 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
         pages.append(okularPage);
     }
 
-    // no need to check for the existence of a synctex file, no parser will
-    // be created if none exists
-    initSynctexParser(fileName);
     return Okular::Document::OpenSuccess;
 }
 
@@ -73,17 +69,7 @@ bool MuPDFGenerator::doCloseDocument()
     delete m_synopsis;
     m_synopsis = 0;
 
-    if (m_synctextScanner) {
-        synctex_scanner_free(m_synctextScanner);
-        m_synctextScanner = 0;
-    }
-
     return true;
-}
-
-void MuPDFGenerator::initSynctexParser(const QString &filePath)
-{
-    m_synctextScanner = synctex_scanner_new_with_output_file(QFile::encodeName(filePath).constData(), 0, 1);
 }
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const
@@ -170,35 +156,6 @@ const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
     return m_synopsis;
 }
 
-const Okular::SourceReference *MuPDFGenerator::dynamicSourceReference(int
-        pageNr, double absX, double absY)
-{
-    if (!m_synctextScanner) {
-        return 0;
-    }
-
-    if (synctex_edit_query(m_synctextScanner, pageNr + 1, absX * 96. /
-                           dpi().width(), absY * 96. / dpi().height()) > 0) {
-        synctex_node_t node;
-        while ((node = synctex_next_result(m_synctextScanner))) {
-            int line = synctex_node_line(node);
-            int col = synctex_node_column(node);
-            // column extraction does not seem to be implemented in synctex so
-            // far. set the SourceReference default value.
-            if (col == -1) {
-                col = 0;
-            }
-            const char *name = synctex_scanner_get_name(m_synctextScanner,
-                               synctex_node_tag(node));
-
-            Okular::SourceReference *sourceRef = new Okular::SourceReference(
-                QFile::decodeName(name), line, col);
-            return sourceRef;
-        }
-    }
-    return 0;
-}
-
 QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
 {
     QMutexLocker locker(userMutex());
@@ -206,72 +163,6 @@ QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
     QMuPDF::Page page = m_pdfdoc.page(request->page()->number());
     QImage image = page.render(request->width(), request->height());
     return image;
-}
-
-void MuPDFGenerator::fillViewportFromSourceReference(Okular::DocumentViewport
-        & viewport, const QString &reference) const
-{
-    if (!m_synctextScanner) {
-        return;
-    }
-
-    // The reference is of form "src:1111Filename", where "1111"
-    // points to line number 1111 in the file "Filename".
-    // Extract the file name and the numeral part from the reference string.
-    // This will fail if Filename starts with a digit.
-    QString name, lineString;
-    // Remove "src:". Presence of substring has been checked before this
-    // function is called.
-    name = reference.mid(4);
-    // split
-    int nameLength = name.length();
-    int i = 0;
-    for (i = 0; i < nameLength; ++i) {
-        if (!name[i].isDigit()) {
-            break;
-        }
-    }
-    lineString = name.left(i);
-    name = name.mid(i);
-    // Remove spaces.
-    name = name.trimmed();
-    lineString = lineString.trimmed();
-    // Convert line to integer.
-    bool ok;
-    int line = lineString.toInt(&ok);
-    if (!ok) {
-        line = -1;
-    }
-
-    // Use column == -1 for now.
-    if (synctex_display_query(m_synctextScanner, QFile::encodeName(name).constData(), line,
-                              -1) > 0) {
-        synctex_node_t node;
-        // For now use the first hit. Could possibly be made smarter
-        // in case there are multiple hits.
-        while ((node = synctex_next_result(m_synctextScanner))) {
-            // TeX pages start at 1.
-            viewport.pageNumber = synctex_node_page(node) - 1;
-
-            if (!viewport.isValid()) {
-                return;
-            }
-
-            // TeX small points ...
-            double px = (synctex_node_visible_h(node) * dpi().width()) /
-                        96;
-            double py = (synctex_node_visible_v(node) * dpi().height()) /
-                        96;
-            viewport.rePos.normalizedX = px /
-                                         document()->page(viewport.pageNumber)->width();
-            viewport.rePos.normalizedY = (py + 0.5) /
-                                         document()->page(viewport.pageNumber)->height();
-            viewport.rePos.enabled = true;
-            viewport.rePos.pos = Okular::DocumentViewport::Center;
-
-            return;
-        }
-    }
 }
 
 static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox *> &boxes,
@@ -310,17 +201,7 @@ QVariant MuPDFGenerator::metaData(const QString &key,
 {
     Q_UNUSED(option)
     if (key == QStringLiteral("NamedViewport") && !option.toString().isEmpty()) {
-        Okular::DocumentViewport viewport;
-        QString optionString = option.toString();
-
-        // if option starts with "src:" assume that we are handling a
-        // source reference
-        if (optionString.startsWith(QStringLiteral("src:"), Qt::CaseInsensitive)) {
-            fillViewportFromSourceReference(viewport, optionString);
-        }
-        if (viewport.pageNumber >= 0) {
-            return viewport.toString();
-        }
+        qWarning() << "We don't store named viewports properly, but it asked for" << option.toString();
     } else if (key == QLatin1String("DocumentTitle")) {
         QMutexLocker locker(userMutex());
         const QString title = m_pdfdoc.infoKey("Title");

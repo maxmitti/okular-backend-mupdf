@@ -12,8 +12,6 @@
 
 #include "document.hpp"
 
-#include "synctex/synctex_parser.h"
-
 #include <okular/core/document.h>
 #include <okular/core/generator.h>
 #include <okular/core/sourcereference.h>
@@ -30,28 +28,20 @@ public:
 
     Okular::Document::OpenResult loadDocumentWithPassword(
         const QString &fileName, QVector<Okular::Page *> &pages,
-        const QString &password);
+        const QString &password) override;
 
-    Okular::DocumentInfo generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const;
-    const Okular::DocumentSynopsis *generateDocumentSynopsis();
-    QVariant metaData(const QString &key, const QVariant &option) const;
+    Okular::DocumentInfo generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const override;
+    const Okular::DocumentSynopsis *generateDocumentSynopsis() override;
+    QVariant metaData(const QString &key, const QVariant &option) const override;
 
 protected:
-    bool doCloseDocument();
-    QImage image(Okular::PixmapRequest *page);
-    Okular::TextPage* textPage(Okular::Page *page);
-
-protected Q_SLOTS:
-    const Okular::SourceReference * dynamicSourceReference(int pageNr, double absX, double absY);
+    bool doCloseDocument() override;
+    QImage image(Okular::PixmapRequest *page) override;
+    Okular::TextPage* textPage(Okular::Page *page) override;
     
 private:
-    void initSynctexParser( const QString& filePath );
-    void fillViewportFromSourceReference( Okular::DocumentViewport & viewport, 
-         const QString & reference ) const;
-
     QMuPDF::Document m_pdfdoc;
     Okular::DocumentSynopsis *m_synopsis;
-    synctex_scanner_t m_synctextScanner;
 };
 
 #endif

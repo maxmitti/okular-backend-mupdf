@@ -30,8 +30,6 @@ set(okularGenerator_mupdf_SRCS
   document.cpp
   page.cpp
   generator_mupdf.cpp
-  synctex/synctex_parser.c
-  synctex/synctex_parser_utils.c
 )
 
 kcoreaddons_add_plugin(okularGenerator_mupdf
