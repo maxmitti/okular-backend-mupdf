@@ -21,8 +21,11 @@ namespace QMuPDF
 
 QRectF convert_fz_rect(const fz_rect &rect, const QSizeF &dpi)
 {
-    return QRectF(QPointF(rect.x0, rect.y0) * dpi.width() / 72.,
-                  QPointF(rect.x1, rect.y1) * dpi.height() / 72.);
+    const float scaleX = dpi.width() / 72.;
+    const float scaleY = dpi.height() / 72.;
+    const QPointF topLeft(rect.x0 * scaleX, rect.y0 * scaleY);
+    const QPointF bottomRight(rect.x1 * scaleX, rect.y1 * scaleY);
+    return QRectF(topLeft, bottomRight);
 }
 
 QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
