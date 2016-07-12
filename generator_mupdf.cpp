@@ -53,7 +53,7 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
     pages.resize(m_pdfdoc.pageCount());
 
     for (int i = 0; i < pages.count(); ++i) {
-        QMuPDF::Page *page = m_pdfdoc.page(i);
+        QMuPDF::Page *page = m_pdfdoc.createPage(i);
         const QSizeF s = page->size(dpi());
         const Okular::Rotation rot = Okular::Rotation0;
         Okular::Page *new_ = new Okular::Page(i, s.width(), s.height(), rot);
@@ -205,7 +205,7 @@ const Okular::SourceReference *MuPDFGenerator::dynamicSourceReference(int
 QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
 {
     QMutexLocker locker(userMutex());
-    QMuPDF::Page *page = m_pdfdoc.page(request->page()->number());
+    QMuPDF::Page *page = m_pdfdoc.createPage(request->page()->number());
     QImage image = page->render(request->width(), request->height());
     delete page;
     return image;
@@ -299,7 +299,7 @@ static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox *> &boxes,
 Okular::TextPage *MuPDFGenerator::textPage(Okular::Page *page)
 {
     QMutexLocker locker(userMutex());
-    QMuPDF::Page *mp = m_pdfdoc.page(page->number());
+    QMuPDF::Page *mp = m_pdfdoc.createPage(page->number());
     const QVector<QMuPDF::TextBox *> boxes = mp->textBoxes(dpi());
     const QSizeF s = mp->size(dpi());
     delete mp;

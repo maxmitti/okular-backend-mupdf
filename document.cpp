@@ -173,7 +173,7 @@ int Document::pageCount() const
     return d->pageCount;
 }
 
-Page *Document::page(int pageno) const
+Page *Document::createPage(int pageno) const
 {
     if (d->mdoc && 0 <= pageno && pageno < d->pageCount) {
         return Page::make(d->ctx, d->mdoc, pageno);

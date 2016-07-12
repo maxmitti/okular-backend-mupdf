@@ -41,7 +41,7 @@ public:
     bool isLocked() const;
     bool unlock(const QByteArray &password);
     int pageCount() const;
-    Page *page(int page) const;
+    Page *createPage(int createPage) const;
     QList<QByteArray> infoKeys() const;
     QString infoKey(const QByteArray &key) const;
     Outline *outline() const;
