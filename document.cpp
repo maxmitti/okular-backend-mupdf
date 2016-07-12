@@ -109,7 +109,15 @@ bool Document::load(const QString &fileName)
         return false;
     }
     char *oldlocale = std::setlocale(LC_NUMERIC, "C");
-    d->mdoc = fz_open_document_with_stream(d->ctx, "pdf", d->stream);
+
+    fz_try(d->ctx) {
+        d->mdoc = fz_open_document_with_stream(d->ctx, "pdf", d->stream);
+    } fz_catch(d->ctx) {
+        qWarning() << "Error when trying to load document";
+        d->mdoc = nullptr;
+        return false;
+    }
+
     if (oldlocale) {
         std::setlocale(LC_NUMERIC, oldlocale);
     }
