@@ -45,8 +45,6 @@ protected Q_SLOTS:
     const Okular::SourceReference * dynamicSourceReference(int pageNr, double absX, double absY);
     
 private:
-    bool init(QVector<Okular::Page*> &pages, const QString &walletKey);
-    void loadPages(QVector<Okular::Page*> &pages);
     void initSynctexParser( const QString& filePath );
     void fillViewportFromSourceReference( Okular::DocumentViewport & viewport, 
          const QString & reference ) const;

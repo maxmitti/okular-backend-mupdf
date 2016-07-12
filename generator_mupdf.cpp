@@ -50,7 +50,18 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
         }
     }
 
-    loadPages(pages);
+    pages.resize(m_pdfdoc.pageCount());
+
+    for (int i = 0; i < pages.count(); ++i) {
+        QMuPDF::Page *page = m_pdfdoc.page(i);
+        const QSizeF s = page->size(dpi());
+        const Okular::Rotation rot = Okular::Rotation0;
+        Okular::Page *new_ = new Okular::Page(i, s.width(), s.height(), rot);
+        new_->setDuration(page->duration());
+        pages[i] = new_;
+        delete page;
+    }
+
     // no need to check for the existence of a synctex file, no parser will
     // be created if none exists
     initSynctexParser(fileName);
@@ -71,21 +82,6 @@ bool MuPDFGenerator::doCloseDocument()
     }
 
     return true;
-}
-
-void MuPDFGenerator::loadPages(QVector<Okular::Page *> &pages)
-{
-    pages.resize(m_pdfdoc.pageCount());
-
-    for (int i = 0; i < pages.count(); ++i) {
-        QMuPDF::Page *page = m_pdfdoc.page(i);
-        const QSizeF s = page->size(dpi());
-        const Okular::Rotation rot = Okular::Rotation0;
-        Okular::Page *new_ = new Okular::Page(i, s.width(), s.height(), rot);
-        new_->setDuration(page->duration());
-        pages[i] = new_;
-        delete page;
-    }
 }
 
 void MuPDFGenerator::initSynctexParser(const QString &filePath)
