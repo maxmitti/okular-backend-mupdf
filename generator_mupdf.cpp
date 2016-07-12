@@ -17,11 +17,9 @@
 
 #include <QFile>
 #include <QImage>
-#include <QMutex>
+#include <QMutexLocker>
 
 OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
-
-static const int MuPDFDebug = 4716;
 
 MuPDFGenerator::MuPDFGenerator(QObject *parent, const QVariantList &args)
     : Generator(parent, args)
@@ -65,9 +63,9 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
 
 bool MuPDFGenerator::doCloseDocument()
 {
-    userMutex()->lock();
+    QMutexLocker locker(userMutex());
     m_pdfdoc.close();
-    userMutex()->unlock();
+
     delete m_docSyn;
     m_docSyn = 0;
 
@@ -101,8 +99,9 @@ void MuPDFGenerator::initSynctexParser(const QString &filePath)
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const
 {
+    QMutexLocker(userMutex());
+
     Okular::DocumentInfo info;
-    userMutex()->lock();
     info.set(Okular::DocumentInfo::MimeType, QStringLiteral("application/pdf"));
     info.set(Okular::DocumentInfo::Pages, QString::number(m_pdfdoc.pageCount()));
 #define SET(key, val) if (keys.contains(key)) { info.set(key, val); }
@@ -116,7 +115,6 @@ Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::Doc
     if (keys.contains(Okular::DocumentInfo::CustomKeys)) {
         info.set(QStringLiteral("format"), i18nc("PDF v. <version>", "PDF v. %1", m_pdfdoc.pdfVersion()), i18n("Format"));
     }
-    userMutex()->unlock();
     return info;
 }
 
@@ -166,13 +164,12 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
 
 const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
 {
+    QMutexLocker locker(userMutex());
     if (m_docSyn) {
         return m_docSyn;
     }
 
-    userMutex()->lock();
     QMuPDF::Outline *outline = m_pdfdoc.outline();
-    userMutex()->unlock();
     if (!outline) {
         return 0;
     }
@@ -215,10 +212,9 @@ const Okular::SourceReference *MuPDFGenerator::dynamicSourceReference(int
 
 QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
 {
-    userMutex()->lock();
+    QMutexLocker locker(userMutex());
     QMuPDF::Page *page = m_pdfdoc.page(request->page()->number());
     QImage image = page->render(request->width(), request->height());
-    userMutex()->unlock();
     delete page;
     return image;
 }
@@ -310,11 +306,10 @@ static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox *> &boxes,
 
 Okular::TextPage *MuPDFGenerator::textPage(Okular::Page *page)
 {
-    userMutex()->lock();
+    QMutexLocker locker(userMutex());
     QMuPDF::Page *mp = m_pdfdoc.page(page->number());
     const QVector<QMuPDF::TextBox *> boxes = mp->textBoxes(dpi());
     const QSizeF s = mp->size(dpi());
-    userMutex()->unlock();
     delete mp;
 
     Okular::TextPage *tp = buildTextPage(boxes, s.width(), s.height());
@@ -339,9 +334,8 @@ QVariant MuPDFGenerator::metaData(const QString &key,
             return viewport.toString();
         }
     } else if (key == QLatin1String("DocumentTitle")) {
-        userMutex()->lock();
+        QMutexLocker locker(userMutex());
         const QString title = m_pdfdoc.infoKey("Title");
-        userMutex()->unlock();
         return title;
     } else if (key == QLatin1String("StartFullScreen")) {
         if (m_pdfdoc.pageMode() == QMuPDF::Document::FullScreen) {
