@@ -27,19 +27,22 @@ class MuPDFGenerator : public Okular::Generator
 public:
     MuPDFGenerator(QObject *parent, const QVariantList &args);
     virtual ~MuPDFGenerator();
+
     Okular::Document::OpenResult loadDocumentWithPassword(
         const QString &fileName, QVector<Okular::Page *> &pages,
         const QString &password);
+
     Okular::DocumentInfo generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const;
     const Okular::DocumentSynopsis *generateDocumentSynopsis();
     QVariant metaData(const QString &key, const QVariant &option) const;
+
 protected:
     bool doCloseDocument();
     QImage image(Okular::PixmapRequest *page);
     Okular::TextPage* textPage(Okular::Page *page);
-protected slots:
-    const Okular::SourceReference * dynamicSourceReference( int pageNr, double 
-          absX, double absY );
+
+protected Q_SLOTS:
+    const Okular::SourceReference * dynamicSourceReference(int pageNr, double absX, double absY);
     
 private:
     bool init(QVector<Okular::Page*> &pages, const QString &walletKey);

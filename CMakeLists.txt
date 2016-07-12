@@ -12,6 +12,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH})
 include(FeatureSummary)
 include(KDEInstallDirs)
 include(KDECMakeSettings)
+include(KDEFrameworkCompilerSettings NO_POLICY_SCOPE)
 
 #TODO: find libmupdf with cmake
 find_package(Okular5 REQUIRED)
@@ -43,8 +44,9 @@ target_link_libraries(okularGenerator_mupdf
     Okular::Core
     KF5::I18n
     mupdf mupdfthird
+    harfbuzz
     ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${JBIG2DEC_LIBRARIES}
-    ${JPEG_LIBRARIES} ${OPENJPEG2_LIBRARIES} ${OPENSSL_LIBRARIES}
+    ${JPEG_LIBRARIES} ${OPENJPEG2_LIBRARIES}
 )
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)

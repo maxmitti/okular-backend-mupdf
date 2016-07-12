@@ -96,15 +96,14 @@ void MuPDFGenerator::loadPages(QVector<Okular::Page *> &pages)
 
 void MuPDFGenerator::initSynctexParser(const QString &filePath)
 {
-    synctex_scanner = synctex_scanner_new_with_output_file(QFile::encodeName(
-                          filePath), 0, 1);
+    synctex_scanner = synctex_scanner_new_with_output_file(QFile::encodeName(filePath).constData(), 0, 1);
 }
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const
 {
     Okular::DocumentInfo info;
     userMutex()->lock();
-    info.set(Okular::DocumentInfo::MimeType, "application/pdf");
+    info.set(Okular::DocumentInfo::MimeType, QStringLiteral("application/pdf"));
     info.set(Okular::DocumentInfo::Pages, QString::number(m_pdfdoc.pageCount()));
 #define SET(key, val) if (keys.contains(key)) { info.set(key, val); }
     SET(Okular::DocumentInfo::Title, m_pdfdoc.infoKey("Title"));
@@ -115,7 +114,7 @@ Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::Doc
     SET(Okular::DocumentInfo::Producer, m_pdfdoc.infoKey("Producer"));
 #undef SET
     if (keys.contains(Okular::DocumentInfo::CustomKeys)) {
-        info.set("format", i18nc("PDF v. <version>", "PDF v. %1", m_pdfdoc.pdfVersion()), i18n("Format"));
+        info.set(QStringLiteral("format"), i18nc("PDF v. <version>", "PDF v. %1", m_pdfdoc.pdfVersion()), i18n("Format"));
     }
     userMutex()->unlock();
     return info;
@@ -128,7 +127,7 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
         QDomElement newel = mainDoc.createElement(child->title());
         parentDestination.appendChild(newel);
         if (child->isOpen()) {
-            newel.setAttribute("Open", "true");
+            newel.setAttribute(QStringLiteral("Open"), QStringLiteral("true"));
         }
         QMuPDF::LinkDest *link = child->link();
         if (!link) {
@@ -143,15 +142,15 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
             vp.rePos.normalizedX = p.x();
             vp.rePos.normalizedY = p.y();
             vp.rePos.enabled = true;
-            newel.setAttribute("Viewport", vp.toString());
+            newel.setAttribute(QStringLiteral("Viewport"), vp.toString());
             break;
         } case QMuPDF::LinkDest::Named: {
             QMuPDF::NamedDest *dest = static_cast<QMuPDF::NamedDest *>(link);
-            newel.setAttribute("ViewportName", dest->name());
+            newel.setAttribute(QStringLiteral("ViewportName"), dest->name());
             break;
         } case QMuPDF::LinkDest::Url: {
             QMuPDF::UrlDest *dest = static_cast<QMuPDF::UrlDest *>(link);
-            newel.setAttribute("DestinationURI", dest->address());
+            newel.setAttribute(QStringLiteral("DestinationURI"), dest->address());
             break;
         }
         case QMuPDF::LinkDest::External:
@@ -260,7 +259,7 @@ void MuPDFGenerator::fillViewportFromSourceReference(Okular::DocumentViewport
     }
 
     // Use column == -1 for now.
-    if (synctex_display_query(synctex_scanner, QFile::encodeName(name), line,
+    if (synctex_display_query(synctex_scanner, QFile::encodeName(name).constData(), line,
                               -1) > 0) {
         synctex_node_t node;
         // For now use the first hit. Could possibly be made smarter
@@ -300,7 +299,7 @@ static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox *> &boxes,
         const QRectF charBBox = box->rect();
         QString text(c);
         if (box->isAtEndOfLine()) {
-            text.append('\n');
+            text.append(QLatin1Char('\n'));
         }
         ktp->append(text, new Okular::NormalizedRect(
                         charBBox.left() / width, charBBox.top() / height,
@@ -327,13 +326,13 @@ QVariant MuPDFGenerator::metaData(const QString &key,
                                   const QVariant &option) const
 {
     Q_UNUSED(option)
-    if (key == "NamedViewport" && !option.toString().isEmpty()) {
+    if (key == QStringLiteral("NamedViewport") && !option.toString().isEmpty()) {
         Okular::DocumentViewport viewport;
         QString optionString = option.toString();
 
         // if option starts with "src:" assume that we are handling a
         // source reference
-        if (optionString.startsWith("src:", Qt::CaseInsensitive)) {
+        if (optionString.startsWith(QStringLiteral("src:"), Qt::CaseInsensitive)) {
             fillViewportFromSourceReference(viewport, optionString);
         }
         if (viewport.pageNumber >= 0) {
