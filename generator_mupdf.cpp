@@ -41,24 +41,20 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
     if (!m_pdfdoc.load(fileName)) {
         return Okular::Document::OpenError;
     }
+
     if (m_pdfdoc.isLocked()) {
-        m_pdfdoc.unlock(password.toLatin1());
+        m_pdfdoc.unlock(password.toLocal8Bit());
         if (m_pdfdoc.isLocked()) {
             m_pdfdoc.close();
             return Okular::Document::OpenNeedsPassword;
         }
     }
-    Q_ASSERT(!m_pdfdoc.isLocked());
 
-    if (!m_pdfdoc.isLocked()) {
-        loadPages(pages);
-        // no need to check for the existence of a synctex file, no parser will
-        // be created if none exists
-        initSynctexParser(fileName);
-        return Okular::Document::OpenSuccess;
-    } else {
-        return Okular::Document::OpenError;
-    }
+    loadPages(pages);
+    // no need to check for the existence of a synctex file, no parser will
+    // be created if none exists
+    initSynctexParser(fileName);
+    return Okular::Document::OpenSuccess;
 }
 
 bool MuPDFGenerator::doCloseDocument()
