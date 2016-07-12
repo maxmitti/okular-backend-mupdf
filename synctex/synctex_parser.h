@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2008, 2009, 2010 , 2011 jerome DOT laurens AT u-bourgogne DOT fr
 
 This file is part of the SyncTeX package.
@@ -32,9 +32,9 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE
 
-Except as contained in this notice, the name of the copyright holder  
-shall not be used in advertising or otherwise to promote the sale,  
-use or other dealings in this Software without prior written  
+Except as contained in this notice, the name of the copyright holder
+shall not be used in advertising or otherwise to promote the sale,
+use or other dealings in this Software without prior written
 authorization from the copyright holder.
 
 Acknowledgments:
@@ -61,7 +61,7 @@ extern "C" {
 
 /*  synctex_node_t is the type for all synctex nodes.
  *  The synctex file is parsed into a tree of nodes, either sheet, boxes, math nodes... */
-typedef struct _synctex_node *  synctex_node_t;
+typedef struct _synctex_node   *synctex_node_t;
 
 /*  The main synctex object is a scanner
  *  Its implementation is considered private.
@@ -71,7 +71,7 @@ typedef struct _synctex_node *  synctex_node_t;
  * - free the scanner when the work is done
  */
 typedef struct __synctex_scanner_t _synctex_scanner_t;
-typedef _synctex_scanner_t *  synctex_scanner_t;
+typedef _synctex_scanner_t   *synctex_scanner_t;
 
 /*  This is the designated method to create a new synctex scanner object.
  *  output is the pdf/dvi/xdv file associated to the synctex file.
@@ -86,19 +86,19 @@ typedef _synctex_scanner_t *  synctex_scanner_t;
  *  Then the private method _synctex_scanner_new_with_contents_of_file is called.
  *  NULL is returned in case of an error or non existent file.
  *  Once you have a scanner, use the synctex_display_query and synctex_edit_query below.
- *	The new "build_directory" argument is available since version 1.5.
- *	It is the directory where all the auxiliary stuff is created.
- *	Sometimes, the synctex output file and the pdf, dvi or xdv files are not created in the same directory.
- *	This is the case in MikTeX (I will include this into TeX Live).
- *	This directory path can be nil, it will be ignored then.
- *	It can be either absolute or relative to the directory of the output pdf (dvi or xdv) file.
- *	If no synctex file is found in the same directory as the output file, then we try to find one in the build directory.
+ *  The new "build_directory" argument is available since version 1.5.
+ *  It is the directory where all the auxiliary stuff is created.
+ *  Sometimes, the synctex output file and the pdf, dvi or xdv files are not created in the same directory.
+ *  This is the case in MikTeX (I will include this into TeX Live).
+ *  This directory path can be nil, it will be ignored then.
+ *  It can be either absolute or relative to the directory of the output pdf (dvi or xdv) file.
+ *  If no synctex file is found in the same directory as the output file, then we try to find one in the build directory.
  *  Please note that this new "build_directory" is provided as a convenient argument but should not be used.
  *  In fact, this is implempented as a work around of a bug in MikTeX where the synctex file does not follow the pdf file.
  *  The new "parse" argument is available since version 1.5. In general, use 1.
  *  Use 0 only if you do not want to parse the content but just check the existence.
  */
-synctex_scanner_t synctex_scanner_new_with_output_file(const char * output, const char * build_directory, int parse);
+synctex_scanner_t synctex_scanner_new_with_output_file(const char *output, const char *build_directory, int parse);
 
 /*  This is the designated method to delete a synctex scanner object.
  *  Frees all the memory, you must call it when you are finished with the scanner.
@@ -110,11 +110,11 @@ void synctex_scanner_free(synctex_scanner_t scanner);
  *  In each query below, this message is sent, but if you need to access information more directly,
  *  you must be sure that the parsing did occur.
  *  Usage:
- *		if((my_scanner = synctex_scanner_parse(my_scanner))) {
- *			continue with my_scanner...
- *		} else {
- *			there was a problem
- *		}
+ *      if((my_scanner = synctex_scanner_parse(my_scanner))) {
+ *          continue with my_scanner...
+ *      } else {
+ *          there was a problem
+ *      }
  */
 synctex_scanner_t synctex_scanner_parse(synctex_scanner_t scanner);
 
@@ -162,8 +162,8 @@ synctex_scanner_t synctex_scanner_parse(synctex_scanner_t scanner);
  *  Sumatra-PDF, Skim, iTeXMac2 and Texworks are examples of open source software that use this library.
  *  You can browse their code for a concrete implementation.
  */
-int synctex_display_query(synctex_scanner_t scanner,const char *  name,int line,int column);
-int synctex_edit_query(synctex_scanner_t scanner,int page,float h,float v);
+int synctex_display_query(synctex_scanner_t scanner, const char   *name, int line, int column);
+int synctex_edit_query(synctex_scanner_t scanner, int page, float h, float v);
 synctex_node_t synctex_next_result(synctex_scanner_t scanner);
 
 /*  Display all the information contained in the scanner object.
@@ -203,11 +203,11 @@ float synctex_scanner_magnification(synctex_scanner_t scanner);
  *  The synctex is the real name of the synctex file,
  *  it was obtained from output by setting the proper file extension.
  */
-const char * synctex_scanner_get_name(synctex_scanner_t scanner,int tag);
-int synctex_scanner_get_tag(synctex_scanner_t scanner,const char * name);
+const char *synctex_scanner_get_name(synctex_scanner_t scanner, int tag);
+int synctex_scanner_get_tag(synctex_scanner_t scanner, const char *name);
 synctex_node_t synctex_scanner_input(synctex_scanner_t scanner);
-const char * synctex_scanner_get_output(synctex_scanner_t scanner);
-const char * synctex_scanner_get_synctex(synctex_scanner_t scanner);
+const char *synctex_scanner_get_output(synctex_scanner_t scanner);
+const char *synctex_scanner_get_synctex(synctex_scanner_t scanner);
 
 /*  Browsing the nodes
  *  parent, child and sibling are standard names for tree nodes.
@@ -236,28 +236,28 @@ synctex_node_t synctex_node_sheet(synctex_node_t node);
 synctex_node_t synctex_node_child(synctex_node_t node);
 synctex_node_t synctex_node_sibling(synctex_node_t node);
 synctex_node_t synctex_node_next(synctex_node_t node);
-synctex_node_t synctex_sheet_content(synctex_scanner_t scanner,int page);
+synctex_node_t synctex_sheet_content(synctex_scanner_t scanner, int page);
 
 /*  These are the types of the synctex nodes */
 typedef enum {
-	synctex_node_type_error = 0,
-	synctex_node_type_input,
-	synctex_node_type_sheet,
-	synctex_node_type_vbox,
-	synctex_node_type_void_vbox,
-	synctex_node_type_hbox,
-	synctex_node_type_void_hbox,
-	synctex_node_type_kern,
-	synctex_node_type_glue,
-	synctex_node_type_math,
-	synctex_node_type_boundary,
-	synctex_node_number_of_types
+    synctex_node_type_error = 0,
+    synctex_node_type_input,
+    synctex_node_type_sheet,
+    synctex_node_type_vbox,
+    synctex_node_type_void_vbox,
+    synctex_node_type_hbox,
+    synctex_node_type_void_hbox,
+    synctex_node_type_kern,
+    synctex_node_type_glue,
+    synctex_node_type_math,
+    synctex_node_type_boundary,
+    synctex_node_number_of_types
 } synctex_node_type_t;
 
 /*  synctex_node_type gives the type of a given node,
  *  synctex_node_isa gives the same information as a human readable text. */
 synctex_node_type_t synctex_node_type(synctex_node_t node);
-const char * synctex_node_isa(synctex_node_t node);
+const char *synctex_node_isa(synctex_node_t node);
 
 /*  This is primarily used for debugging purpose.
  *  The second one logs information for the node and recursively displays information for its next node */
@@ -323,18 +323,18 @@ float synctex_node_box_visible_depth(synctex_node_t node);
  *  that could occur while postprocessing files by dvipdf like filters.
  */
 typedef struct __synctex_updater_t _synctex_updater_t;
-typedef _synctex_updater_t * synctex_updater_t;
+typedef _synctex_updater_t *synctex_updater_t;
 
 /*  Designated initializer.
  *  Once you are done with your whole job,
  *  free the updater */
-synctex_updater_t synctex_updater_new_with_output_file(const char * output, const char * directory);
+synctex_updater_t synctex_updater_new_with_output_file(const char *output, const char *directory);
 
 /*  Use the next functions to append records to the synctex file,
  *  no consistency tests made on the arguments */
-void synctex_updater_append_magnification(synctex_updater_t updater, char *  magnification);
-void synctex_updater_append_x_offset(synctex_updater_t updater, char *  x_offset);
-void synctex_updater_append_y_offset(synctex_updater_t updater, char *  y_offset);
+void synctex_updater_append_magnification(synctex_updater_t updater, char   *magnification);
+void synctex_updater_append_x_offset(synctex_updater_t updater, char   *x_offset);
+void synctex_updater_append_y_offset(synctex_updater_t updater, char   *y_offset);
 
 /*  You MUST free the updater, once everything is properly appended */
 void synctex_updater_free(synctex_updater_t updater);

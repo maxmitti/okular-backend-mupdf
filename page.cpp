@@ -15,12 +15,13 @@ extern "C" {
 
 #include <QImage>
 
-namespace QMuPDF {
+namespace QMuPDF
+{
 
 QRectF convert_fz_rect(const fz_rect &rect, const QSizeF &dpi)
 {
-    return QRectF(QPointF(rect.x0, rect.y0)*dpi.width()/72.,
-                  QPointF(rect.x1, rect.y1)*dpi.height()/72.);
+    return QRectF(QPointF(rect.x0, rect.y0) * dpi.width() / 72.,
+                  QPointF(rect.x1, rect.y1) * dpi.height() / 72.);
 }
 
 QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
@@ -63,8 +64,9 @@ Page *Page::make(fz_context_s *ctx, fz_document_s *doc, int num)
 {
     Q_ASSERT(doc && ctx);
     fz_page *page = fz_load_page(ctx, doc, num);
-    if (!page)
+    if (!page) {
         return 0;
+    }
     Page *p = new Page();
     p->d->pageNum = num;
     p->d->doc = doc;
@@ -72,7 +74,6 @@ Page *Page::make(fz_context_s *ctx, fz_document_s *doc, int num)
     p->d->page = page;
     return p;
 }
-
 
 int Page::number() const
 {
@@ -84,8 +85,8 @@ QSizeF Page::size(const QSizeF &dpi) const
     fz_rect rect;
     fz_bound_page(d->ctx, d->page, &rect);
     // MuPDF always assumes 72dpi
-    return QSizeF((rect.x1 - rect.x0)*dpi.width()/72.,
-                  (rect.y1 - rect.y0)*dpi.height()/72.);
+    return QSizeF((rect.x1 - rect.x0) * dpi.width() / 72.,
+                  (rect.y1 - rect.y0) * dpi.height() / 72.);
 }
 
 qreal Page::duration() const
@@ -111,8 +112,9 @@ QImage Page::render(qreal width, qreal height) const
     fz_drop_device(d->ctx, device);
 
     QImage img;
-    if (!cookie.errors)
+    if (!cookie.errors) {
         img = convert_fz_pixmap(d->ctx, image);
+    }
     fz_drop_pixmap(d->ctx, image);
     return img;
 }
@@ -134,8 +136,9 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     QVector<TextBox *> boxes;
 
     for (int i_block = 0; i_block < page->len; ++i_block) {
-        if (page->blocks[i_block].type != FZ_PAGE_BLOCK_TEXT)
+        if (page->blocks[i_block].type != FZ_PAGE_BLOCK_TEXT) {
             continue;
+        }
         fz_stext_block &block = *page->blocks[i_block].u.text;
         for (int i_line = 0; i_line < block.len; ++i_line) {
             fz_stext_line &line = block.lines[i_line];
@@ -150,8 +153,9 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
                     hasText = true;
                 }
             }
-            if (hasText)
+            if (hasText) {
                 boxes.back()->markAtEndOfLine();
+            }
         }
     }
 

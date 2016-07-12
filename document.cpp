@@ -18,7 +18,8 @@ extern "C" {
 
 #include <cstring>
 
-namespace QMuPDF {
+namespace QMuPDF
+{
 
 QRectF convert_fz_rect(const fz_rect &rect, const QSizeF &dpi);
 
@@ -36,32 +37,44 @@ struct Document::Data {
     PageMode pageMode;
     bool locked;
 
-    pdf_document *pdf() const { return reinterpret_cast<pdf_document*>(mdoc); }
+    pdf_document *pdf() const
+    {
+        return reinterpret_cast<pdf_document *>(mdoc);
+    }
     pdf_obj *dict(const char *key) const
-        { return pdf_dict_gets(ctx, pdf_trailer(ctx, pdf()), key); }
-    void loadInfoDict() { if (!info) info = dict("Info"); }
+    {
+        return pdf_dict_gets(ctx, pdf_trailer(ctx, pdf()), key);
+    }
+    void loadInfoDict()
+    {
+        if (!info) {
+            info = dict("Info");
+        }
+    }
     bool load()
     {
         pdf_obj *root = dict("Root");
-        if (!root)
+        if (!root) {
             return false;
+        }
 
         pageCount = fz_count_pages(ctx, mdoc);
         pdf_obj *obj = pdf_dict_gets(ctx, root, "PageMode");
         if (obj && pdf_is_name(ctx, obj)) {
-            const char* mode = pdf_to_name(ctx, obj);
-            if (!std::strcmp(mode, "UseNone"))
+            const char *mode = pdf_to_name(ctx, obj);
+            if (!std::strcmp(mode, "UseNone")) {
                 pageMode = Document::UseNone;
-            else if (!std::strcmp(mode, "UseOutlines"))
+            } else if (!std::strcmp(mode, "UseOutlines")) {
                 pageMode = Document::UseOutlines;
-            else if (!std::strcmp(mode, "UseThumbs"))
+            } else if (!std::strcmp(mode, "UseThumbs")) {
                 pageMode = Document::UseThumbs;
-            else if (!std::strcmp(mode, "FullScreen"))
+            } else if (!std::strcmp(mode, "FullScreen")) {
                 pageMode = Document::FullScreen;
-            else if (!std::strcmp(mode, "UseOC"))
+            } else if (!std::strcmp(mode, "UseOC")) {
                 pageMode = Document::UseOC;
-            else if (!std::strcmp(mode, "UseAttachments"))
+            } else if (!std::strcmp(mode, "UseAttachments")) {
                 pageMode = Document::UseAttachments;
+            }
         }
         return true;
     }
@@ -92,20 +105,24 @@ bool Document::load(const QString &fileName)
 {
     QByteArray fileData = QFile::encodeName(fileName);
     d->stream = fz_open_file(d->ctx, fileData.constData());
-    if (!d->stream)
+    if (!d->stream) {
         return false;
+    }
     char *oldlocale = std::setlocale(LC_NUMERIC, "C");
     d->mdoc = fz_open_document_with_stream(d->ctx, "pdf", d->stream);
-    if (oldlocale)
+    if (oldlocale) {
         std::setlocale(LC_NUMERIC, oldlocale);
-    if (!d->mdoc)
+    }
+    if (!d->mdoc) {
         return false;
+    }
 
     d->locked = fz_needs_password(d->ctx, d->mdoc);
 
     if (!d->locked) {
-        if (!d->load())
+        if (!d->load()) {
             return false;
+        }
     }
 
     return true;
@@ -113,8 +130,9 @@ bool Document::load(const QString &fileName)
 
 void Document::close()
 {
-    if (!d->mdoc)
+    if (!d->mdoc) {
         return;
+    }
 
     fz_drop_document(d->ctx, d->mdoc);
     d->mdoc = 0;
@@ -133,16 +151,19 @@ bool Document::isLocked() const
 
 bool Document::unlock(const QByteArray &password)
 {
-    if (!d->locked)
+    if (!d->locked) {
         return false;
+    }
 
     QByteArray a = password;
-    if (!fz_authenticate_password(d->ctx, d->mdoc, a.data()))
+    if (!fz_authenticate_password(d->ctx, d->mdoc, a.data())) {
         return false;
+    }
 
     d->locked = false;
-    if (!d->load())
+    if (!d->load()) {
         return false;
+    }
 
     return true;
 }
@@ -152,42 +173,48 @@ int Document::pageCount() const
     return d->pageCount;
 }
 
-Page* Document::page(int pageno) const
+Page *Document::page(int pageno) const
 {
-    if (d->mdoc && 0 <= pageno && pageno < d->pageCount)
+    if (d->mdoc && 0 <= pageno && pageno < d->pageCount) {
         return Page::make(d->ctx, d->mdoc, pageno);
+    }
     return 0;
 }
 
 QList<QByteArray> Document::infoKeys() const
 {
     QList<QByteArray> keys;
-    if (!d->mdoc)
+    if (!d->mdoc) {
         return keys;
+    }
 
     d->loadInfoDict();
 
-    if (!d->info)
+    if (!d->info) {
         return keys;
+    }
 
     const int dictSize = pdf_dict_len(d->ctx, d->info);
     for (int i = 0; i < dictSize; ++i) {
         pdf_obj *obj = pdf_dict_get_key(d->ctx, d->info, i);
-        if (pdf_is_name(d->ctx, obj))
+        if (pdf_is_name(d->ctx, obj)) {
             keys.append(QByteArray(pdf_to_name(d->ctx, obj)));
+        }
     }
     return keys;
 }
 
 QString Document::infoKey(const QByteArray &key) const
 {
-    if (!d->mdoc)
+    if (!d->mdoc) {
         return QString();
+    }
 
     d->loadInfoDict();
 
-    if (!d->info)
+    if (!d->info) {
         return QString();
+    }
 
     pdf_obj *obj = pdf_dict_gets(d->ctx, d->info, key.constData());
     if (obj) {
@@ -202,11 +229,12 @@ QString Document::infoKey(const QByteArray &key) const
     return QString();
 }
 
-Outline* Document::outline() const
+Outline *Document::outline() const
 {
     fz_outline *out = fz_load_outline(d->ctx, d->mdoc);
-    if (!out)
+    if (!out) {
         return 0;
+    }
 
     Outline *item = new Outline;
     d->convertOutline(out, item);
@@ -218,13 +246,15 @@ Outline* Document::outline() const
 
 float Document::pdfVersion() const
 {
-    if (!d->mdoc)
+    if (!d->mdoc) {
         return 0.0f;
+    }
     char buf[64];
     if (fz_lookup_metadata(d->ctx, d->mdoc, FZ_META_FORMAT, buf, sizeof(buf)) != -1) {
         int major, minor;
-        if (sscanf(buf, "PDF %d.%d", &major, &minor) == 2)
+        if (sscanf(buf, "PDF %d.%d", &major, &minor) == 2) {
             return float(major + minor / 10.0);
+        }
     }
     return 0.0f;
 }
@@ -238,8 +268,9 @@ Document::PageMode Document::pageMode() const
 
 Outline::Outline(const fz_outline *out)
 {
-    if (out->title)
+    if (out->title) {
         m_title = QString::fromUtf8(out->title);
+    }
     m_link = LinkDest::create(&out->dest);
 }
 
@@ -251,8 +282,9 @@ Outline::~Outline()
 
 LinkDest *LinkDest::create(const fz_link_dest *dest)
 {
-    if (!dest)
+    if (!dest) {
         return 0;
+    }
     switch (dest->kind) {
     case FZ_LINK_GOTO:
         return new GotoDest(dest);

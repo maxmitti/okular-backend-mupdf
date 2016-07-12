@@ -37,11 +37,12 @@ MuPDFGenerator::~MuPDFGenerator()
 }
 
 Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
-    const QString &fileName, QVector<Okular::Page*> &pages,
+    const QString &fileName, QVector<Okular::Page *> &pages,
     const QString &password)
 {
-    if (!m_pdfdoc.load(fileName))
+    if (!m_pdfdoc.load(fileName)) {
         return Okular::Document::OpenError;
+    }
     if (m_pdfdoc.isLocked()) {
         m_pdfdoc.unlock(password.toLatin1());
         if (m_pdfdoc.isLocked()) {
@@ -50,16 +51,16 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
         }
     }
     Q_ASSERT(!m_pdfdoc.isLocked());
-    
-    if (!m_pdfdoc.isLocked())
-    {
+
+    if (!m_pdfdoc.isLocked()) {
         loadPages(pages);
-        // no need to check for the existence of a synctex file, no parser will 
+        // no need to check for the existence of a synctex file, no parser will
         // be created if none exists
         initSynctexParser(fileName);
         return Okular::Document::OpenSuccess;
+    } else {
+        return Okular::Document::OpenError;
     }
-    else return Okular::Document::OpenError;
 }
 
 bool MuPDFGenerator::doCloseDocument()
@@ -69,13 +70,12 @@ bool MuPDFGenerator::doCloseDocument()
     userMutex()->unlock();
     delete m_docSyn;
     m_docSyn = 0;
-    
-    if ( synctex_scanner )
-    {
-        synctex_scanner_free( synctex_scanner );
+
+    if (synctex_scanner) {
+        synctex_scanner_free(synctex_scanner);
         synctex_scanner = 0;
     }
-    
+
     return true;
 }
 
@@ -87,17 +87,17 @@ void MuPDFGenerator::loadPages(QVector<Okular::Page *> &pages)
         QMuPDF::Page *page = m_pdfdoc.page(i);
         const QSizeF s = page->size(dpi());
         const Okular::Rotation rot = Okular::Rotation0;
-        Okular::Page* new_ = new Okular::Page(i, s.width(), s.height(), rot);
+        Okular::Page *new_ = new Okular::Page(i, s.width(), s.height(), rot);
         new_->setDuration(page->duration());
         pages[i] = new_;
         delete page;
     }
 }
 
-void MuPDFGenerator::initSynctexParser ( const QString& filePath )
+void MuPDFGenerator::initSynctexParser(const QString &filePath)
 {
-    synctex_scanner = synctex_scanner_new_with_output_file( QFile::encodeName( 
-    filePath ), 0, 1);
+    synctex_scanner = synctex_scanner_new_with_output_file(QFile::encodeName(
+                          filePath), 0, 1);
 }
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const
@@ -114,8 +114,9 @@ Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::Doc
     SET(Okular::DocumentInfo::Creator, m_pdfdoc.infoKey("Creator"));
     SET(Okular::DocumentInfo::Producer, m_pdfdoc.infoKey("Producer"));
 #undef SET
-    if (keys.contains(Okular::DocumentInfo::CustomKeys))
+    if (keys.contains(Okular::DocumentInfo::CustomKeys)) {
         info.set("format", i18nc("PDF v. <version>", "PDF v. %1", m_pdfdoc.pdfVersion()), i18n("Format"));
+    }
     userMutex()->unlock();
     return info;
 }
@@ -126,14 +127,16 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
     foreach (QMuPDF::Outline *child, outline->children()) {
         QDomElement newel = mainDoc.createElement(child->title());
         parentDestination.appendChild(newel);
-        if (child->isOpen())
+        if (child->isOpen()) {
             newel.setAttribute("Open", "true");
+        }
         QMuPDF::LinkDest *link = child->link();
-        if (!link)
+        if (!link) {
             continue;
+        }
         switch (link->type()) {
         case QMuPDF::LinkDest::Goto: {
-            QMuPDF::GotoDest *dest = static_cast<QMuPDF::GotoDest*>(link);
+            QMuPDF::GotoDest *dest = static_cast<QMuPDF::GotoDest *>(link);
             Okular::DocumentViewport vp(dest->page());
             vp.rePos.pos = Okular::DocumentViewport::TopLeft;
             const QPointF p = dest->rect(dpi).topLeft();
@@ -143,11 +146,11 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
             newel.setAttribute("Viewport", vp.toString());
             break;
         } case QMuPDF::LinkDest::Named: {
-            QMuPDF::NamedDest *dest = static_cast<QMuPDF::NamedDest*>(link);
+            QMuPDF::NamedDest *dest = static_cast<QMuPDF::NamedDest *>(link);
             newel.setAttribute("ViewportName", dest->name());
             break;
         } case QMuPDF::LinkDest::Url: {
-            QMuPDF::UrlDest *dest = static_cast<QMuPDF::UrlDest*>(link);
+            QMuPDF::UrlDest *dest = static_cast<QMuPDF::UrlDest *>(link);
             newel.setAttribute("DestinationURI", dest->address());
             break;
         }
@@ -162,17 +165,18 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
     }
 }
 
-
-const Okular::DocumentSynopsis* MuPDFGenerator::generateDocumentSynopsis()
+const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
 {
-    if (m_docSyn)
+    if (m_docSyn) {
         return m_docSyn;
+    }
 
     userMutex()->lock();
-    QMuPDF::Outline* outline = m_pdfdoc.outline();
+    QMuPDF::Outline *outline = m_pdfdoc.outline();
     userMutex()->unlock();
-    if (!outline)
+    if (!outline) {
         return 0;
+    }
 
     m_docSyn = new Okular::DocumentSynopsis();
     recurseCreateTOC(*m_docSyn, outline, *m_docSyn, dpi());
@@ -181,31 +185,29 @@ const Okular::DocumentSynopsis* MuPDFGenerator::generateDocumentSynopsis()
     return m_docSyn;
 }
 
-const Okular::SourceReference * MuPDFGenerator::dynamicSourceReference( int 
-                                pageNr, double absX, double absY )
+const Okular::SourceReference *MuPDFGenerator::dynamicSourceReference(int
+        pageNr, double absX, double absY)
 {
-    if  ( !synctex_scanner )
+    if (!synctex_scanner) {
         return 0;
-    
-    if (synctex_edit_query(synctex_scanner, pageNr + 1, absX * 96. / 
-        dpi().width(), absY * 96. / dpi().height()) > 0)
-    {
+    }
+
+    if (synctex_edit_query(synctex_scanner, pageNr + 1, absX * 96. /
+                           dpi().width(), absY * 96. / dpi().height()) > 0) {
         synctex_node_t node;
-        while ((node = synctex_next_result( synctex_scanner) ))
-        {
+        while ((node = synctex_next_result(synctex_scanner))) {
             int line = synctex_node_line(node);
             int col = synctex_node_column(node);
-            // column extraction does not seem to be implemented in synctex so 
+            // column extraction does not seem to be implemented in synctex so
             // far. set the SourceReference default value.
-            if ( col == -1 )
-            {
+            if (col == -1) {
                 col = 0;
             }
-            const char *name = synctex_scanner_get_name( synctex_scanner, 
-            synctex_node_tag( node ) );
-            
-            Okular::SourceReference * sourceRef = new Okular::SourceReference( 
-            QFile::decodeName (name), line, col );
+            const char *name = synctex_scanner_get_name(synctex_scanner,
+                               synctex_node_tag(node));
+
+            Okular::SourceReference *sourceRef = new Okular::SourceReference(
+                QFile::decodeName(name), line, col);
             return sourceRef;
         }
     }
@@ -222,12 +224,13 @@ QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
     return image;
 }
 
-void MuPDFGenerator::fillViewportFromSourceReference (Okular::DocumentViewport 
-& viewport, const QString & reference ) const
+void MuPDFGenerator::fillViewportFromSourceReference(Okular::DocumentViewport
+        & viewport, const QString &reference) const
 {
-    if ( !synctex_scanner )
+    if (!synctex_scanner) {
         return;
-    
+    }
+
     // The reference is of form "src:1111Filename", where "1111"
     // points to line number 1111 in the file "Filename".
     // Extract the file name and the numeral part from the reference string.
@@ -235,47 +238,50 @@ void MuPDFGenerator::fillViewportFromSourceReference (Okular::DocumentViewport
     QString name, lineString;
     // Remove "src:". Presence of substring has been checked before this
     // function is called.
-    name = reference.mid( 4 );
+    name = reference.mid(4);
     // split
     int nameLength = name.length();
     int i = 0;
-    for( i = 0; i < nameLength; ++i )
-    {
-        if ( !name[i].isDigit() ) break;
+    for (i = 0; i < nameLength; ++i) {
+        if (!name[i].isDigit()) {
+            break;
+        }
     }
-    lineString = name.left( i );
-    name = name.mid( i );
+    lineString = name.left(i);
+    name = name.mid(i);
     // Remove spaces.
     name = name.trimmed();
     lineString = lineString.trimmed();
     // Convert line to integer.
     bool ok;
-    int line = lineString.toInt( &ok );
-    if (!ok) line = -1;
-    
+    int line = lineString.toInt(&ok);
+    if (!ok) {
+        line = -1;
+    }
+
     // Use column == -1 for now.
-    if( synctex_display_query( synctex_scanner, QFile::encodeName(name), line, 
-        -1 ) > 0 )
-    {
+    if (synctex_display_query(synctex_scanner, QFile::encodeName(name), line,
+                              -1) > 0) {
         synctex_node_t node;
         // For now use the first hit. Could possibly be made smarter
         // in case there are multiple hits.
-        while( ( node = synctex_next_result( synctex_scanner ) ) )
-        {
+        while ((node = synctex_next_result(synctex_scanner))) {
             // TeX pages start at 1.
-            viewport.pageNumber = synctex_node_page( node ) - 1;
-            
-            if ( !viewport.isValid() ) return;
-            
+            viewport.pageNumber = synctex_node_page(node) - 1;
+
+            if (!viewport.isValid()) {
+                return;
+            }
+
             // TeX small points ...
-            double px = (synctex_node_visible_h( node ) * dpi().width()) / 
-            96;
-            double py = (synctex_node_visible_v( node ) * dpi().height()) / 
-            96;
-            viewport.rePos.normalizedX = px / 
-            document()->page(viewport.pageNumber)->width();
-            viewport.rePos.normalizedY = ( py + 0.5 ) / 
-            document()->page(viewport.pageNumber)->height();
+            double px = (synctex_node_visible_h(node) * dpi().width()) /
+                        96;
+            double py = (synctex_node_visible_v(node) * dpi().height()) /
+                        96;
+            viewport.rePos.normalizedX = px /
+                                         document()->page(viewport.pageNumber)->width();
+            viewport.rePos.normalizedY = (py + 0.5) /
+                                         document()->page(viewport.pageNumber)->height();
             viewport.rePos.enabled = true;
             viewport.rePos.pos = Okular::DocumentViewport::Center;
 
@@ -284,7 +290,7 @@ void MuPDFGenerator::fillViewportFromSourceReference (Okular::DocumentViewport
     }
 }
 
-static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox*> &boxes,
+static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox *> &boxes,
                                        qreal width, qreal height)
 {
     Okular::TextPage *ktp = new Okular::TextPage();
@@ -303,7 +309,7 @@ static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox*> &boxes,
     return ktp;
 }
 
-Okular::TextPage* MuPDFGenerator::textPage(Okular::Page *page)
+Okular::TextPage *MuPDFGenerator::textPage(Okular::Page *page)
 {
     userMutex()->lock();
     QMuPDF::Page *mp = m_pdfdoc.page(page->number());
@@ -321,31 +327,31 @@ QVariant MuPDFGenerator::metaData(const QString &key,
                                   const QVariant &option) const
 {
     Q_UNUSED(option)
-    if ( key == "NamedViewport" && !option.toString().isEmpty() )
-    {
+    if (key == "NamedViewport" && !option.toString().isEmpty()) {
         Okular::DocumentViewport viewport;
         QString optionString = option.toString();
-        
+
         // if option starts with "src:" assume that we are handling a
         // source reference
-        if ( optionString.startsWith( "src:", Qt::CaseInsensitive ) )
-        {
-            fillViewportFromSourceReference( viewport, optionString );
+        if (optionString.startsWith("src:", Qt::CaseInsensitive)) {
+            fillViewportFromSourceReference(viewport, optionString);
         }
-        if ( viewport.pageNumber >= 0 )
+        if (viewport.pageNumber >= 0) {
             return viewport.toString();
-    }
-    else if (key == QLatin1String("DocumentTitle")) {
+        }
+    } else if (key == QLatin1String("DocumentTitle")) {
         userMutex()->lock();
         const QString title = m_pdfdoc.infoKey("Title");
         userMutex()->unlock();
         return title;
     } else if (key == QLatin1String("StartFullScreen")) {
-        if (m_pdfdoc.pageMode() == QMuPDF::Document::FullScreen)
+        if (m_pdfdoc.pageMode() == QMuPDF::Document::FullScreen) {
             return true;
+        }
     } else if (key == QLatin1String("OpenTOC")) {
-        if (m_pdfdoc.pageMode() == QMuPDF::Document::UseOutlines)
+        if (m_pdfdoc.pageMode() == QMuPDF::Document::UseOutlines) {
             return true;
+        }
     }
     return QVariant();
 }
