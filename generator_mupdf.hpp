@@ -50,10 +50,10 @@ private:
     void initSynctexParser( const QString& filePath );
     void fillViewportFromSourceReference( Okular::DocumentViewport & viewport, 
          const QString & reference ) const;
+
     QMuPDF::Document m_pdfdoc;
-    Okular::DocumentSynopsis *m_docSyn;
-    
-    synctex_scanner_t synctex_scanner;
+    Okular::DocumentSynopsis *m_synopsis;
+    synctex_scanner_t m_synctextScanner;
 };
 
 #endif

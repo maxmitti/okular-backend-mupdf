@@ -23,8 +23,8 @@ OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
 
 MuPDFGenerator::MuPDFGenerator(QObject *parent, const QVariantList &args)
     : Generator(parent, args)
-    , m_docSyn(0)
-    , synctex_scanner(0)
+    , m_synopsis(0)
+    , m_synctextScanner(0)
 {
     setFeature(Threaded);
     setFeature(TextExtraction);
@@ -62,12 +62,12 @@ bool MuPDFGenerator::doCloseDocument()
     QMutexLocker locker(userMutex());
     m_pdfdoc.close();
 
-    delete m_docSyn;
-    m_docSyn = 0;
+    delete m_synopsis;
+    m_synopsis = 0;
 
-    if (synctex_scanner) {
-        synctex_scanner_free(synctex_scanner);
-        synctex_scanner = 0;
+    if (m_synctextScanner) {
+        synctex_scanner_free(m_synctextScanner);
+        m_synctextScanner = 0;
     }
 
     return true;
@@ -90,7 +90,7 @@ void MuPDFGenerator::loadPages(QVector<Okular::Page *> &pages)
 
 void MuPDFGenerator::initSynctexParser(const QString &filePath)
 {
-    synctex_scanner = synctex_scanner_new_with_output_file(QFile::encodeName(filePath).constData(), 0, 1);
+    m_synctextScanner = synctex_scanner_new_with_output_file(QFile::encodeName(filePath).constData(), 0, 1);
 }
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const
@@ -161,8 +161,8 @@ static void recurseCreateTOC(QDomDocument &mainDoc, QMuPDF::Outline *outline,
 const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
 {
     QMutexLocker locker(userMutex());
-    if (m_docSyn) {
-        return m_docSyn;
+    if (m_synopsis) {
+        return m_synopsis;
     }
 
     QMuPDF::Outline *outline = m_pdfdoc.outline();
@@ -170,24 +170,24 @@ const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
         return 0;
     }
 
-    m_docSyn = new Okular::DocumentSynopsis();
-    recurseCreateTOC(*m_docSyn, outline, *m_docSyn, dpi());
+    m_synopsis = new Okular::DocumentSynopsis();
+    recurseCreateTOC(*m_synopsis, outline, *m_synopsis, dpi());
     delete outline;
 
-    return m_docSyn;
+    return m_synopsis;
 }
 
 const Okular::SourceReference *MuPDFGenerator::dynamicSourceReference(int
         pageNr, double absX, double absY)
 {
-    if (!synctex_scanner) {
+    if (!m_synctextScanner) {
         return 0;
     }
 
-    if (synctex_edit_query(synctex_scanner, pageNr + 1, absX * 96. /
+    if (synctex_edit_query(m_synctextScanner, pageNr + 1, absX * 96. /
                            dpi().width(), absY * 96. / dpi().height()) > 0) {
         synctex_node_t node;
-        while ((node = synctex_next_result(synctex_scanner))) {
+        while ((node = synctex_next_result(m_synctextScanner))) {
             int line = synctex_node_line(node);
             int col = synctex_node_column(node);
             // column extraction does not seem to be implemented in synctex so
@@ -195,7 +195,7 @@ const Okular::SourceReference *MuPDFGenerator::dynamicSourceReference(int
             if (col == -1) {
                 col = 0;
             }
-            const char *name = synctex_scanner_get_name(synctex_scanner,
+            const char *name = synctex_scanner_get_name(m_synctextScanner,
                                synctex_node_tag(node));
 
             Okular::SourceReference *sourceRef = new Okular::SourceReference(
@@ -218,7 +218,7 @@ QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
 void MuPDFGenerator::fillViewportFromSourceReference(Okular::DocumentViewport
         & viewport, const QString &reference) const
 {
-    if (!synctex_scanner) {
+    if (!m_synctextScanner) {
         return;
     }
 
@@ -251,12 +251,12 @@ void MuPDFGenerator::fillViewportFromSourceReference(Okular::DocumentViewport
     }
 
     // Use column == -1 for now.
-    if (synctex_display_query(synctex_scanner, QFile::encodeName(name).constData(), line,
+    if (synctex_display_query(m_synctextScanner, QFile::encodeName(name).constData(), line,
                               -1) > 0) {
         synctex_node_t node;
         // For now use the first hit. Could possibly be made smarter
         // in case there are multiple hits.
-        while ((node = synctex_next_result(synctex_scanner))) {
+        while ((node = synctex_next_result(m_synctextScanner))) {
             // TeX pages start at 1.
             viewport.pageNumber = synctex_node_page(node) - 1;
 
