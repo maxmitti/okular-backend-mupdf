@@ -50,15 +50,13 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
         }
     }
 
-    pages.resize(m_pdfdoc.pageCount());
-
-    for (int i = 0; i < pages.count(); ++i) {
+    for (int i = 0; i < m_pdfdoc.pageCount(); ++i) {
         QMuPDF::Page page = m_pdfdoc.page(i);
         const QSizeF s = page.size(dpi());
         const Okular::Rotation rot = Okular::Rotation0;
-        Okular::Page *new_ = new Okular::Page(i, s.width(), s.height(), rot);
-        new_->setDuration(page.duration());
-        pages[i] = new_;
+        Okular::Page *okularPage = new Okular::Page(i, s.width(), s.height(), rot);
+        okularPage->setDuration(page.duration());
+        pages.append(okularPage);
     }
 
     // no need to check for the existence of a synctex file, no parser will
@@ -204,6 +202,7 @@ const Okular::SourceReference *MuPDFGenerator::dynamicSourceReference(int
 QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
 {
     QMutexLocker locker(userMutex());
+
     QMuPDF::Page page = m_pdfdoc.page(request->page()->number());
     QImage image = page.render(request->width(), request->height());
     return image;
