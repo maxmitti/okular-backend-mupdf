@@ -20,7 +20,7 @@
         ],
         "Version": "0.1"
     },
-    "X-KDE-Priority": 1,
+    "X-KDE-Priority": 10,
     "X-KDE-okularAPIVersion": 1,
     "X-KDE-okularHasInternalSettings": true
 }
