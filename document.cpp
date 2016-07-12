@@ -173,12 +173,9 @@ int Document::pageCount() const
     return d->pageCount;
 }
 
-Page *Document::createPage(int pageno) const
+Page Document::page(int pageno) const
 {
-    if (d->mdoc && 0 <= pageno && pageno < d->pageCount) {
-        return Page::make(d->ctx, d->mdoc, pageno);
-    }
-    return 0;
+    return Page(d->ctx, d->mdoc, pageno);
 }
 
 QList<QByteArray> Document::infoKeys() const

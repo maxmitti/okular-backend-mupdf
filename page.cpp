@@ -14,6 +14,7 @@ extern "C" {
 }
 
 #include <QImage>
+#include <QSharedData>
 
 namespace QMuPDF
 {
@@ -41,7 +42,8 @@ QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
     return img;
 }
 
-struct Page::Data {
+struct Page::Data : public QSharedData
+{
     Data(): pageNum(-1), doc(0), page(0) { }
     int pageNum;
     fz_context *ctx;
@@ -57,22 +59,21 @@ Page::Page()
 Page::~Page()
 {
     fz_drop_page(d->ctx, d->page);
-    delete d;
 }
 
-Page *Page::make(fz_context_s *ctx, fz_document_s *doc, int num)
+Page::Page(fz_context_s *ctx, fz_document_s *doc, int num) :
+    d(new Page::Data)
 {
     Q_ASSERT(doc && ctx);
-    fz_page *page = fz_load_page(ctx, doc, num);
-    if (!page) {
-        return 0;
-    }
-    Page *p = new Page();
-    p->d->pageNum = num;
-    p->d->doc = doc;
-    p->d->ctx = ctx;
-    p->d->page = page;
-    return p;
+    d->page = fz_load_page(ctx, doc, num);
+    d->pageNum = num;
+    d->doc = doc;
+    d->ctx = ctx;
+}
+
+Page::Page(const Page &other) :
+    d(other.d)
+{
 }
 
 int Page::number() const

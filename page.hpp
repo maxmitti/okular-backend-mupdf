@@ -12,6 +12,7 @@
 
 #include <QRect>
 #include <QString>
+#include <QSharedDataPointer>
 
 class QImage;
 class QSizeF;
@@ -23,20 +24,23 @@ namespace QMuPDF {
 
 class TextBox;
 
-class Page {
+class Page
+{
 public:
+    Page(fz_context_s *ctx, fz_document_s *doc, int num);
+    Page(const Page &other);
+
     ~Page();
     int number() const;
     QSizeF size(const QSizeF &dpi) const;
     qreal duration() const;
     QImage render(qreal width, qreal height) const;
     QVector<TextBox *> textBoxes(const QSizeF &dpi) const;
-    static Page *make(fz_context_s *ctx, fz_document_s *doc, int num);
+
 private:
     Page();
-    Q_DISABLE_COPY(Page)
     struct Data;
-    Data *d;
+    QSharedDataPointer<Data> d;
 };
 
 class TextBox {
