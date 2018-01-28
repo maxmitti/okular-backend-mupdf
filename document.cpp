@@ -91,7 +91,7 @@ struct Document::Data {
 Document::Document()
     : d(new Data)
 {
-    fz_register_document_handler(d->ctx, &pdf_document_handler);
+    fz_register_document_handlers(d->ctx);
 }
 
 Document::~Document()
@@ -224,7 +224,7 @@ QString Document::infoKey(const QByteArray &key) const
     pdf_obj *obj = pdf_dict_gets(d->ctx, d->info, key.constData());
     if (obj) {
         obj = pdf_resolve_indirect(d->ctx, obj);
-        char *value = pdf_to_utf8(d->ctx, d->pdf(), obj);
+        char *value = pdf_to_utf8(d->ctx, obj);
         if (value) {
             const QString res = QString::fromUtf8(value);
             fz_free(d->ctx, value);
@@ -247,6 +247,16 @@ Outline *Document::outline() const
     fz_drop_outline(d->ctx, out);
 
     return item;
+}
+
+fz_context *Document::ctx() const
+{
+    return d->ctx;
+}
+
+fz_document *Document::doc() const
+{
+    return d->mdoc;
 }
 
 float Document::pdfVersion() const
@@ -276,34 +286,14 @@ Outline::Outline(const fz_outline *out)
     if (out->title) {
         m_title = QString::fromUtf8(out->title);
     }
-    m_link = LinkDest::create(&out->dest);
+    if (out->uri) {
+        m_link = std::string(out->uri);
+    }
 }
 
 Outline::~Outline()
 {
     qDeleteAll(m_children);
-    delete m_link;
-}
-
-LinkDest *LinkDest::create(const fz_link_dest *dest)
-{
-    if (!dest) {
-        return 0;
-    }
-    switch (dest->kind) {
-    case FZ_LINK_GOTO:
-        return new GotoDest(dest);
-    case FZ_LINK_GOTOR:
-        return new ExternalDest(dest);
-    case FZ_LINK_LAUNCH:
-        return new LaunchDest(dest);
-    case FZ_LINK_NAMED:
-        return new NamedDest(dest);
-    case FZ_LINK_URI:
-        return new UrlDest(dest);
-    default:
-        return 0;
-    }
 }
 
 }
