@@ -175,10 +175,10 @@ static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox *> &boxes,
     return ktp;
 }
 
-Okular::TextPage *MuPDFGenerator::textPage(Okular::Page *page)
+Okular::TextPage *MuPDFGenerator::textPage(Okular::TextRequest *request)
 {
     QMutexLocker locker(userMutex());
-    QMuPDF::Page mp = m_pdfdoc.page(page->number());
+    QMuPDF::Page mp = m_pdfdoc.page(request->page()->number());
     const QVector<QMuPDF::TextBox *> boxes = mp.textBoxes(dpi());
     const QSizeF s = mp.size(dpi());
 

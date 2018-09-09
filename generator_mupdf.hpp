@@ -37,7 +37,7 @@ public:
 protected:
     bool doCloseDocument() override;
     QImage image(Okular::PixmapRequest *page) override;
-    Okular::TextPage* textPage(Okular::Page *page) override;
+    Okular::TextPage* textPage(Okular::TextRequest *request) override;
     
 private:
     QMuPDF::Document m_pdfdoc;
