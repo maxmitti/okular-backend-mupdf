@@ -3,6 +3,8 @@ project(okular-mupdf)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 cmake_minimum_required(VERSION 2.8.12)
 
+set(CMAKE_CXX_STANDARD 20)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(OPENJPEG2 REQUIRED libopenjp2)
 pkg_check_modules(OPENSSL REQUIRED openssl)
