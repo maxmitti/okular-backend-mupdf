@@ -23,15 +23,13 @@ OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
 
 MuPDFGenerator::MuPDFGenerator(QObject *parent, const QVariantList &args)
     : Generator(parent, args)
-    , m_synopsis(0)
+    , m_synopsis(nullptr)
 {
     setFeature(Threaded);
     setFeature(TextExtraction);
 }
 
-MuPDFGenerator::~MuPDFGenerator()
-{
-}
+MuPDFGenerator::~MuPDFGenerator() = default;
 
 Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
     const QString &fileName, QVector<Okular::Page *> &pages,
@@ -67,14 +65,14 @@ bool MuPDFGenerator::doCloseDocument()
     m_pdfdoc.close();
 
     delete m_synopsis;
-    m_synopsis = 0;
+    m_synopsis = nullptr;
 
     return true;
 }
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const
 {
-    QMutexLocker(userMutex());
+    QMutexLocker locker(userMutex());
 
     Okular::DocumentInfo info;
     info.set(Okular::DocumentInfo::MimeType, QStringLiteral("application/pdf"));
@@ -137,7 +135,7 @@ const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
 
     QMuPDF::Outline *outline = m_pdfdoc.outline();
     if (!outline) {
-        return 0;
+        return nullptr;
     }
 
     m_synopsis = new Okular::DocumentSynopsis();

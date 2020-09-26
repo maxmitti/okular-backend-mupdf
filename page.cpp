@@ -74,10 +74,7 @@ Page::Page(fz_context_s *ctx, fz_document_s *doc, int num) :
     d->ctx = ctx;
 }
 
-Page::Page(const Page &other) :
-    d(other.d)
-{
-}
+Page::Page(const Page &other) = default;
 
 int Page::number() const
 {
@@ -159,4 +156,4 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     return boxes;
 }
 
-}
+} // namespace QMuPDF

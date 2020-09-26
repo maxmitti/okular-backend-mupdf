@@ -57,6 +57,6 @@ private:
     bool m_end : 1;
 };
 
-}
+} // namespace QMuPDF
 
 #endif

@@ -25,8 +25,8 @@ QRectF convert_fz_rect(const fz_rect &rect, const QSizeF &dpi);
 
 struct Document::Data {
     Data()
-        : ctx(fz_new_context(NULL, NULL, FZ_STORE_DEFAULT))
-        , mdoc(0), stream(0), pageCount(0), info(0)
+        : ctx(fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT))
+        , mdoc(nullptr), stream(nullptr), pageCount(0), info(nullptr)
         , pageMode(Document::UseNone), locked(false) { }
 
     fz_context *ctx;
@@ -143,11 +143,11 @@ void Document::close()
     }
 
     fz_drop_document(d->ctx, d->mdoc);
-    d->mdoc = 0;
+    d->mdoc = nullptr;
     fz_drop_stream(d->ctx, d->stream);
-    d->stream = 0;
+    d->stream = nullptr;
     d->pageCount = 0;
-    d->info = 0;
+    d->info = nullptr;
     d->pageMode = UseNone;
     d->locked = false;
 }
@@ -238,7 +238,7 @@ Outline *Document::outline() const
 {
     fz_outline *out = fz_load_outline(d->ctx, d->mdoc);
     if (!out) {
-        return 0;
+        return nullptr;
     }
 
     Outline *item = new Outline;
@@ -296,4 +296,4 @@ Outline::~Outline()
     qDeleteAll(m_children);
 }
 
-}
+} // namespace QMuPDF

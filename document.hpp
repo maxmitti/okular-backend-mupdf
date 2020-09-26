@@ -75,6 +75,6 @@ private:
     std::string m_link;
 };
 
-}
+} // namespace QMuPDF
 
 #endif
