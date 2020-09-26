@@ -84,7 +84,7 @@ QSizeF Page::size(const QSizeF &dpi) const
 qreal Page::duration() const
 {
     float val;
-    (void)fz_page_presentation(d->ctx, d->page, NULL, &val);
+    (void)fz_page_presentation(d->ctx, d->page, nullptr, &val);
     return val < 0.1 ? -1 : val;
 }
 
