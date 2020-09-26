@@ -20,7 +20,8 @@ class QSizeF;
 struct fz_document;
 struct fz_context;
 
-namespace QMuPDF {
+namespace QMuPDF
+{
 
 class TextBox;
 
@@ -43,14 +44,27 @@ private:
     QSharedDataPointer<Data> d;
 };
 
-class TextBox {
+class TextBox
+{
 public:
     TextBox(QChar c, const QRectF &bbox)
         : m_text(c), m_rect(bbox), m_end(false) { }
-    QRectF rect() const { return m_rect; }
-    QChar text() const { return m_text; }
-    bool isAtEndOfLine() const { return m_end; }
-    void markAtEndOfLine() { m_end = true; }
+    QRectF rect() const
+    {
+        return m_rect;
+    }
+    QChar text() const
+    {
+        return m_text;
+    }
+    bool isAtEndOfLine() const
+    {
+        return m_end;
+    }
+    void markAtEndOfLine()
+    {
+        m_end = true;
+    }
 private:
     QChar m_text;
     QRectF m_rect;

@@ -54,14 +54,17 @@ struct Document::Data {
     bool load()
     {
         pdf_obj *root = dict("Root");
+
         if (!root) {
             return false;
         }
 
         pageCount = fz_count_pages(ctx, mdoc);
         pdf_obj *obj = pdf_dict_gets(ctx, root, "PageMode");
+
         if (obj && pdf_is_name(ctx, obj)) {
             const char *mode = pdf_to_name(ctx, obj);
+
             if (!std::strcmp(mode, "UseNone")) {
                 pageMode = Document::UseNone;
             } else if (!std::strcmp(mode, "UseOutlines")) {
@@ -76,6 +79,7 @@ struct Document::Data {
                 pageMode = Document::UseAttachments;
             }
         }
+
         return true;
     }
     void convertOutline(fz_outline *out, Outline *item)
@@ -105,14 +109,16 @@ bool Document::load(const QString &fileName)
 {
     QByteArray fileData = QFile::encodeName(fileName);
     d->stream = fz_open_file(d->ctx, fileData.constData());
+
     if (!d->stream) {
         return false;
     }
-    char *oldlocale = std::setlocale(LC_NUMERIC, "C");
 
+    char *oldlocale = std::setlocale(LC_NUMERIC, "C");
     fz_try(d->ctx) {
         d->mdoc = fz_open_document_with_stream(d->ctx, "pdf", d->stream);
-    } fz_catch(d->ctx) {
+    }
+    fz_catch(d->ctx) {
         qWarning() << "Error when trying to load document";
         d->mdoc = nullptr;
         return false;
@@ -121,6 +127,7 @@ bool Document::load(const QString &fileName)
     if (oldlocale) {
         std::setlocale(LC_NUMERIC, oldlocale);
     }
+
     if (!d->mdoc) {
         return false;
     }
@@ -164,11 +171,13 @@ bool Document::unlock(const QByteArray &password)
     }
 
     QByteArray a = password;
+
     if (!fz_authenticate_password(d->ctx, d->mdoc, a.data())) {
         return false;
     }
 
     d->locked = false;
+
     if (!d->load()) {
         return false;
     }
@@ -189,6 +198,7 @@ Page Document::page(int pageno) const
 QList<QByteArray> Document::infoKeys() const
 {
     QList<QByteArray> keys;
+
     if (!d->mdoc) {
         return keys;
     }
@@ -200,12 +210,15 @@ QList<QByteArray> Document::infoKeys() const
     }
 
     const int dictSize = pdf_dict_len(d->ctx, d->info);
+
     for (int i = 0; i < dictSize; ++i) {
         pdf_obj *obj = pdf_dict_get_key(d->ctx, d->info, i);
+
         if (pdf_is_name(d->ctx, obj)) {
             keys.append(QByteArray(pdf_to_name(d->ctx, obj)));
         }
     }
+
     return keys;
 }
 
@@ -222,12 +235,15 @@ QString Document::infoKey(const QByteArray &key) const
     }
 
     pdf_obj *obj = pdf_dict_gets(d->ctx, d->info, key.constData());
+
     if (obj) {
         obj = pdf_resolve_indirect(d->ctx, obj);
+
         if (!pdf_is_string(d->ctx, obj)) {
             qWarning() << "info object not a string!";
             return {};
         }
+
         char *value = pdf_new_utf8_from_pdf_string_obj(d->ctx, obj);
 
         if (value) {
@@ -236,21 +252,21 @@ QString Document::infoKey(const QByteArray &key) const
             return res;
         }
     }
+
     return QString();
 }
 
 Outline *Document::outline() const
 {
     fz_outline *out = fz_load_outline(d->ctx, d->mdoc);
+
     if (!out) {
         return nullptr;
     }
 
     Outline *item = new Outline;
     d->convertOutline(out, item);
-
     fz_drop_outline(d->ctx, out);
-
     return item;
 }
 
@@ -269,13 +285,17 @@ float Document::pdfVersion() const
     if (!d->mdoc) {
         return 0.0f;
     }
+
     char buf[64];
+
     if (fz_lookup_metadata(d->ctx, d->mdoc, FZ_META_FORMAT, buf, sizeof(buf)) != -1) {
         int major, minor;
+
         if (sscanf(buf, "PDF %d.%d", &major, &minor) == 2) {
             return float(major + minor / 10.0);
         }
     }
+
     return 0.0f;
 }
 
@@ -291,6 +311,7 @@ Outline::Outline(const fz_outline *out)
     if (out->title) {
         m_title = QString::fromUtf8(out->title);
     }
+
     if (out->uri) {
         m_link = std::string(out->uri);
     }

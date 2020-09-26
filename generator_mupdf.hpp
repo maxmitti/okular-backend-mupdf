@@ -20,7 +20,7 @@
 class MuPDFGenerator : public Okular::Generator
 {
     Q_OBJECT
-    Q_INTERFACES( Okular::Generator )
+    Q_INTERFACES(Okular::Generator)
 
 public:
     MuPDFGenerator(QObject *parent, const QVariantList &args);
@@ -37,8 +37,8 @@ public:
 protected:
     bool doCloseDocument() override;
     QImage image(Okular::PixmapRequest *page) override;
-    Okular::TextPage* textPage(Okular::TextRequest *request) override;
-    
+    Okular::TextPage *textPage(Okular::TextRequest *request) override;
+
 private:
     QMuPDF::Document m_pdfdoc;
     Okular::DocumentSynopsis *m_synopsis;

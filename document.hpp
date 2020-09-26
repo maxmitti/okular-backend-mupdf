@@ -19,12 +19,14 @@ extern "C" {
 #include <QString>
 #include <QVector>
 
-namespace QMuPDF {
+namespace QMuPDF
+{
 
 class Page;
 class Outline;
 
-class Document {
+class Document
+{
 public:
     enum PageMode {
         UseNone,
@@ -57,20 +59,36 @@ private:
 
 class LinkDest;
 
-class Outline {
+class Outline
+{
 public:
     Outline(const fz_outline *fz);
     Outline(): m_open(false) { }
     ~Outline();
-    QString title() const { return m_title; }
-    bool isOpen() const { return m_open; }
-    QVector<Outline*> children() const { return m_children; }
-    void appendChild(Outline *child) { m_children.push_back(child); }
-    const std::string &link() const { return m_link; }
+    QString title() const
+    {
+        return m_title;
+    }
+    bool isOpen() const
+    {
+        return m_open;
+    }
+    QVector<Outline *> children() const
+    {
+        return m_children;
+    }
+    void appendChild(Outline *child)
+    {
+        m_children.push_back(child);
+    }
+    const std::string &link() const
+    {
+        return m_link;
+    }
 private:
     Q_DISABLE_COPY(Outline)
     QString m_title;
-    QVector<Outline*> m_children;
+    QVector<Outline *> m_children;
     bool m_open : 1;
     std::string m_link;
 };

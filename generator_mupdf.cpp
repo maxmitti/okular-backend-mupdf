@@ -41,6 +41,7 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
 
     if (m_pdfdoc.isLocked()) {
         m_pdfdoc.unlock(password.toLocal8Bit());
+
         if (m_pdfdoc.isLocked()) {
             m_pdfdoc.close();
             return Okular::Document::OpenNeedsPassword;
@@ -63,17 +64,14 @@ bool MuPDFGenerator::doCloseDocument()
 {
     QMutexLocker locker(userMutex());
     m_pdfdoc.close();
-
     delete m_synopsis;
     m_synopsis = nullptr;
-
     return true;
 }
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const
 {
     QMutexLocker locker(userMutex());
-
     Okular::DocumentInfo info;
     info.set(Okular::DocumentInfo::MimeType, QStringLiteral("application/pdf"));
     info.set(Okular::DocumentInfo::Pages, QString::number(m_pdfdoc.pageCount()));
@@ -85,9 +83,11 @@ Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::Doc
     SET(Okular::DocumentInfo::Creator, m_pdfdoc.infoKey("Creator"));
     SET(Okular::DocumentInfo::Producer, m_pdfdoc.infoKey("Producer"));
 #undef SET
+
     if (keys.contains(Okular::DocumentInfo::CustomKeys)) {
         info.set(QStringLiteral("format"), i18nc("PDF v. <version>", "PDF v. %1", m_pdfdoc.pdfVersion()), i18n("Format"));
     }
+
     return info;
 }
 
@@ -97,10 +97,13 @@ static void recurseCreateTOC(const QMuPDF::Document &doc, QDomDocument &mainDoc,
     foreach (QMuPDF::Outline *child, outline->children()) {
         QDomElement newel = mainDoc.createElement(child->title());
         parentDestination.appendChild(newel);
+
         if (child->isOpen()) {
             newel.setAttribute(QStringLiteral("Open"), QStringLiteral("true"));
         }
+
         std::string link = child->link();
+
         if (!link.size()) {
             continue;
         }
@@ -111,8 +114,9 @@ static void recurseCreateTOC(const QMuPDF::Document &doc, QDomDocument &mainDoc,
             float xp = 0, yp = 0;
             fz_location location = fz_resolve_link(doc.ctx(), doc.doc(), link.c_str(), &xp, &yp);
 
-            if (location.page == -1)
+            if (location.page == -1) {
                 continue;
+            }
 
             Okular::DocumentViewport vp(location.page);
             vp.rePos.pos = Okular::DocumentViewport::TopLeft;
@@ -129,11 +133,13 @@ static void recurseCreateTOC(const QMuPDF::Document &doc, QDomDocument &mainDoc,
 const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
 {
     QMutexLocker locker(userMutex());
+
     if (m_synopsis) {
         return m_synopsis;
     }
 
     QMuPDF::Outline *outline = m_pdfdoc.outline();
+
     if (!outline) {
         return nullptr;
     }
@@ -141,14 +147,12 @@ const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
     m_synopsis = new Okular::DocumentSynopsis();
     recurseCreateTOC(m_pdfdoc, *m_synopsis, outline, *m_synopsis, dpi());
     delete outline;
-
     return m_synopsis;
 }
 
 QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
 {
     QMutexLocker locker(userMutex());
-
     QMuPDF::Page page = m_pdfdoc.page(request->page()->number());
     QImage image = page.render(request->width(), request->height());
     return image;
@@ -158,18 +162,22 @@ static Okular::TextPage *buildTextPage(const QVector<QMuPDF::TextBox *> &boxes,
                                        qreal width, qreal height)
 {
     Okular::TextPage *ktp = new Okular::TextPage();
+
     for (int i = 0; i < boxes.size(); ++i) {
         QMuPDF::TextBox *box = boxes.at(i);
         const QChar c = box->text();
         const QRectF charBBox = box->rect();
         QString text(c);
+
         if (box->isAtEndOfLine()) {
             text.append(QLatin1Char('\n'));
         }
+
         ktp->append(text, new Okular::NormalizedRect(
                         charBBox.left() / width, charBBox.top() / height,
                         charBBox.right() / width, charBBox.bottom() / height));
     }
+
     return ktp;
 }
 
@@ -179,7 +187,6 @@ Okular::TextPage *MuPDFGenerator::textPage(Okular::TextRequest *request)
     QMuPDF::Page mp = m_pdfdoc.page(request->page()->number());
     const QVector<QMuPDF::TextBox *> boxes = mp.textBoxes(dpi());
     const QSizeF s = mp.size(dpi());
-
     Okular::TextPage *tp = buildTextPage(boxes, s.width(), s.height());
     qDeleteAll(boxes);
     return tp;
@@ -189,6 +196,7 @@ QVariant MuPDFGenerator::metaData(const QString &key,
                                   const QVariant &option) const
 {
     Q_UNUSED(option)
+
     if (key == QStringLiteral("NamedViewport") && !option.toString().isEmpty()) {
         qWarning() << "We don't store named viewports properly, but it asked for" << option.toString();
     } else if (key == QLatin1String("DocumentTitle")) {
@@ -204,6 +212,7 @@ QVariant MuPDFGenerator::metaData(const QString &key,
             return true;
         }
     }
+
     return QVariant();
 }
 

@@ -39,10 +39,11 @@ QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
         memcpy(img.bits(), fz_pixmap_samples(ctx, image), img.sizeInBytes());
     } else {
         qWarning() << "QImage line stride" << img.bytesPerLine() << "doesn't match" << fz_pixmap_stride(ctx, image);
+        QRgb *data = reinterpret_cast<QRgb *>(fz_pixmap_samples(ctx, image));
 
-        QRgb *data = reinterpret_cast<QRgb*>(fz_pixmap_samples(ctx, image));
         for (int i = 0; i < h; ++i) {
-            QRgb *imgdata = reinterpret_cast<QRgb*>(img.scanLine(h));
+            QRgb *imgdata = reinterpret_cast<QRgb *>(img.scanLine(h));
+
             for (int j = 0; j < w; ++j) {
                 *imgdata = *data;
                 data++;
@@ -50,11 +51,11 @@ QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
             }
         }
     }
+
     return img;
 }
 
-struct Page::Data : public QSharedData
-{
+struct Page::Data : public QSharedData {
     Data(int pageNum, fz_context *ctx, fz_document *doc, fz_page *page) : pageNum{pageNum}, ctx{ctx}, doc{doc}, page{page} {}
     int pageNum;
     fz_context *ctx;
@@ -107,11 +108,12 @@ QImage Page::render(qreal width, qreal height) const
     fz_run_page(d->ctx, d->page, device, ctm, &cookie);
     fz_close_device(d->ctx, device);
     fz_drop_device(d->ctx, device);
-
     QImage img;
+
     if (!cookie.errors) {
         img = convert_fz_pixmap(d->ctx, image);
     }
+
     fz_drop_pixmap(d->ctx, image);
     return img;
 }
@@ -134,16 +136,20 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     QVector<TextBox *> boxes;
 
     for (fz_stext_block *block = page->first_block; block; block = block->next) {
-        if (block->type != FZ_STEXT_BLOCK_TEXT)
+        if (block->type != FZ_STEXT_BLOCK_TEXT) {
             continue;
+        }
+
         for (fz_stext_line *line = block->u.t.first_line; line; line = line->next) {
             bool hasText = false;
+
             for (fz_stext_char *ch = line->first_char; ch; ch = ch->next) {
                 const int text = ch->c;
                 TextBox *box = new TextBox(text, convert_fz_rect(fz_rect_from_quad(ch->quad), dpi));
                 boxes.append(box);
                 hasText = true;
             }
+
             if (hasText) {
                 boxes.back()->markAtEndOfLine();
             }
@@ -151,7 +157,6 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     }
 
     fz_drop_stext_page(d->ctx, page);
-
     return boxes;
 }
 
