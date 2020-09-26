@@ -106,6 +106,7 @@ QImage Page::render(qreal width, qreal height) const
     fz_clear_pixmap_with_value(d->ctx, image, 0xff);
     fz_device *device = fz_new_draw_device(d->ctx, fz_identity, image);
     fz_run_page(d->ctx, d->page, device, ctm, &cookie);
+    fz_close_device(d->ctx, device);
     fz_drop_device(d->ctx, device);
 
     QImage img;
@@ -123,6 +124,7 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     fz_stext_options options{};
     fz_device *device = fz_new_stext_device(d->ctx, page, &options);
     fz_run_page(d->ctx, d->page, device, fz_identity, &cookie);
+    fz_close_device(d->ctx, device);
     fz_drop_device(d->ctx, device);
 
     if (cookie.errors) {
