@@ -33,6 +33,9 @@ set(okularGenerator_mupdf_SRCS
   document.cpp
   page.cpp
   generator_mupdf.cpp
+  document.hpp
+  page.hpp
+  generator_mupdf.hpp
 )
 
 kcoreaddons_add_plugin(okularGenerator_mupdf
