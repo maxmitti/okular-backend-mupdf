@@ -8,8 +8,13 @@ MuPDF shows much better performance than default backend.
 TODO
 ====
  - Form filling
- - epub support
- - XPS support
+ - Expose other formats libmupdf supports:
+    - EPUB
+    - XPS
+    - SVG
+    - CBZ
+    - Images
+    - HTML
 
 The original source codes can be found at:
 svn://anonsvn.kde.org/home/kde/trunk/playground/graphics/okular/mupdf
