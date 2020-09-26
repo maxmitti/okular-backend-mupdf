@@ -13,6 +13,7 @@ extern "C" {
 #include <mupdf/fitz.h>
 }
 
+#include <QDebug>
 #include <QImage>
 #include <QSharedData>
 
@@ -33,13 +34,20 @@ QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
     const int w = fz_pixmap_width(ctx, image);
     const int h = fz_pixmap_height(ctx, image);
     QImage img(w, h, QImage::Format_ARGB32);
-    unsigned char *data = fz_pixmap_samples(ctx, image);
-    unsigned int *imgdata = (unsigned int *)img.bits();
-    for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < w; ++j) {
-            *imgdata = qRgba(data[0], data[1], data[2], data[3]);
-            data = data + 4;
-            imgdata++;
+
+    if (img.bytesPerLine() == fz_pixmap_stride(ctx, image)) {
+        memcpy(img.bits(), fz_pixmap_samples(ctx, image), img.sizeInBytes());
+    } else {
+        qWarning() << "QImage line stride" << img.bytesPerLine() << "doesn't match" << fz_pixmap_stride(ctx, image);
+
+        QRgb *data = reinterpret_cast<QRgb*>(fz_pixmap_samples(ctx, image));
+        for (int i = 0; i < h; ++i) {
+            QRgb *imgdata = reinterpret_cast<QRgb*>(img.scanLine(h));
+            for (int j = 0; j < w; ++j) {
+                *imgdata = *data;
+                data++;
+                imgdata++;
+            }
         }
     }
     return img;
