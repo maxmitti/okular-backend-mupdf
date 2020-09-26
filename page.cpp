@@ -82,8 +82,7 @@ int Page::number() const
 
 QSizeF Page::size(const QSizeF &dpi) const
 {
-    fz_rect rect{}; // TODO: this isn't used anymore?
-    fz_bound_page(d->ctx, d->page);
+    fz_rect rect = fz_bound_page(d->ctx, d->page);
     // MuPDF always assumes 72dpi
     return QSizeF((rect.x1 - rect.x0) * dpi.width() / 72.,
                   (rect.y1 - rect.y0) * dpi.height() / 72.);
