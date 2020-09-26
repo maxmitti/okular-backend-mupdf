@@ -17,12 +17,12 @@ include(KDECMakeSettings)
 include(ECMEnableSanitizers)
 
 
-#TODO: find libmupdf with cmake
 find_package(Okular5 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(jbig2dec REQUIRED)
 find_package(JPEG REQUIRED)
+find_package(MuPDF REQUIRED)
 
 find_package(KF5 REQUIRED COMPONENTS
     CoreAddons
@@ -47,7 +47,7 @@ kcoreaddons_add_plugin(okularGenerator_mupdf
 target_link_libraries(okularGenerator_mupdf
     Okular::Core
     KF5::I18n
-    mupdf mupdf-third
+    MuPDF::MuPDF
     harfbuzz
     ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${JBIG2DEC_LIBRARIES}
     ${JPEG_LIBRARIES} ${OPENJPEG2_LIBRARIES}
