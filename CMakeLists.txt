@@ -24,6 +24,7 @@ find_package(JPEG REQUIRED)
 # TODO: old crap style, fix
 find_package(jbig2dec REQUIRED)
 find_package(OpenJPEG REQUIRED)
+find_package(LCMS2 REQUIRED)
 
 find_package(KF5 REQUIRED COMPONENTS
     CoreAddons
@@ -52,13 +53,14 @@ target_link_libraries(okularGenerator_mupdf
     MuPDF::Third
     MuPDF::MuJS
     JPEG::JPEG
-    liblcms2.so
     ${OPENJPEG_LIBRARIES}
     ${JBIG2DEC_LIBRARIES}
+    ${LCMS2_LIBRARIES}
 )
 include_directories(
     ${OPENJPEG_INCLUDE_DIRS}
     ${JBIG2DEC_INCLUDE_DIRS}
+    ${LCMS2_INCLUDE_DIR}
     )
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
