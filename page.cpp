@@ -59,7 +59,7 @@ Page::~Page()
     fz_drop_page(d->ctx, d->page);
 }
 
-Page::Page(fz_context_s *ctx, fz_document_s *doc, int num) :
+Page::Page(fz_context *ctx, fz_document *doc, int num) :
     d(new Page::Data(num, ctx, doc, fz_load_page(ctx, doc, num)))
 {
     Q_ASSERT(doc && ctx);

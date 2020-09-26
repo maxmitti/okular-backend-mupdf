@@ -17,8 +17,8 @@
 class QImage;
 class QSizeF;
 
-struct fz_document_s;
-struct fz_context_s;
+struct fz_document;
+struct fz_context;
 
 namespace QMuPDF {
 
@@ -27,7 +27,7 @@ class TextBox;
 class Page
 {
 public:
-    Page(fz_context_s *ctx, fz_document_s *doc, int num);
+    Page(fz_context *ctx, fz_document *doc, int num);
     Page(const Page &other);
 
     ~Page();
