@@ -13,8 +13,12 @@ find_package(ECM 5.19.0 CONFIG REQUIRED)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH})
 include(FeatureSummary)
 include(KDEInstallDirs)
-include(KDECMakeSettings)
+
 include(ECMEnableSanitizers)
+# Unless we do this we get some really fucking annoying warnings about stuff
+# noone cares about (yes, I'm hangry).
+set(KDE_SKIP_TEST_SETTINGS TRUE)
+include(KDECMakeSettings)
 
 
 find_package(Okular5 REQUIRED)
