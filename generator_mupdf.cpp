@@ -109,12 +109,12 @@ static void recurseCreateTOC(const QMuPDF::Document &doc, QDomDocument &mainDoc,
             newel.setAttribute(QStringLiteral("DestinationURI"), QString::fromUtf8(link.c_str()));
         } else {
             float xp = 0, yp = 0;
-            int page = fz_resolve_link(doc.ctx(), doc.doc(), link.c_str(), &xp, &yp);
+            fz_location location = fz_resolve_link(doc.ctx(), doc.doc(), link.c_str(), &xp, &yp);
 
-            if (page == -1)
+            if (location.page == -1)
                 continue;
 
-            Okular::DocumentViewport vp(page);
+            Okular::DocumentViewport vp(location.page);
             vp.rePos.pos = Okular::DocumentViewport::TopLeft;
             vp.rePos.normalizedX = xp;
             vp.rePos.normalizedY = yp;
