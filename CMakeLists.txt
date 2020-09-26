@@ -18,11 +18,12 @@ include(ECMEnableSanitizers)
 
 
 find_package(Okular5 REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(Freetype REQUIRED)
-find_package(jbig2dec REQUIRED)
-find_package(JPEG REQUIRED)
 find_package(MuPDF REQUIRED)
+find_package(JPEG REQUIRED)
+
+# TODO: old crap style, fix
+find_package(jbig2dec REQUIRED)
+find_package(OpenJPEG REQUIRED)
 
 find_package(KF5 REQUIRED COMPONENTS
     CoreAddons
@@ -47,10 +48,17 @@ kcoreaddons_add_plugin(okularGenerator_mupdf
 target_link_libraries(okularGenerator_mupdf
     Okular::Core
     KF5::I18n
-    MuPDF::MuPDF
-    harfbuzz
-    ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${JBIG2DEC_LIBRARIES}
-    ${JPEG_LIBRARIES} ${OPENJPEG2_LIBRARIES}
+    MuPDF::Main
+    MuPDF::Third
+    MuPDF::MuJS
+    JPEG::JPEG
+    liblcms2.so
+    ${OPENJPEG_LIBRARIES}
+    ${JBIG2DEC_LIBRARIES}
 )
+include_directories(
+    ${OPENJPEG_INCLUDE_DIRS}
+    ${JBIG2DEC_INCLUDE_DIRS}
+    )
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
