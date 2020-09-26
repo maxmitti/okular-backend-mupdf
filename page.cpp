@@ -47,17 +47,12 @@ QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
 
 struct Page::Data : public QSharedData
 {
-    Data(): pageNum(-1), doc(0), page(0) { }
+    Data(int pageNum, fz_context *ctx, fz_document *doc, fz_page *page) : pageNum{pageNum}, ctx{ctx}, doc{doc}, page{page} {}
     int pageNum;
     fz_context *ctx;
     fz_document *doc;
     fz_page *page;
 };
-
-Page::Page()
-    : d(new Data)
-{
-}
 
 Page::~Page()
 {
@@ -65,13 +60,9 @@ Page::~Page()
 }
 
 Page::Page(fz_context_s *ctx, fz_document_s *doc, int num) :
-    d(new Page::Data)
+    d(new Page::Data(num, ctx, doc, fz_load_page(ctx, doc, num)))
 {
     Q_ASSERT(doc && ctx);
-    d->page = fz_load_page(ctx, doc, num);
-    d->pageNum = num;
-    d->doc = doc;
-    d->ctx = ctx;
 }
 
 Page::Page(const Page &other) = default;
@@ -83,8 +74,8 @@ int Page::number() const
 
 QSizeF Page::size(const QSizeF &dpi) const
 {
-    fz_rect rect;
-    fz_bound_page(d->ctx, d->page, &rect);
+    fz_rect rect{}; // TODO: this isn't used anymore?
+    fz_bound_page(d->ctx, d->page);
     // MuPDF always assumes 72dpi
     return QSizeF((rect.x1 - rect.x0) * dpi.width() / 72.,
                   (rect.y1 - rect.y0) * dpi.height() / 72.);
@@ -100,16 +91,13 @@ qreal Page::duration() const
 QImage Page::render(qreal width, qreal height) const
 {
     const QSizeF s = size(QSizeF(72, 72));
-
-    fz_matrix ctm;
-    fz_scale(&ctm, width / s.width(), height / s.height());
-
-    fz_cookie cookie = { 0, 0, 0, 0, 0, 0 };
+    fz_matrix ctm = fz_scale(width / s.width(), height / s.height());
+    fz_cookie cookie = { 0, 0, 0, 0, 0 };
     fz_colorspace *csp = fz_device_rgb(d->ctx);
-    fz_pixmap *image = fz_new_pixmap(d->ctx, csp, width, height, NULL, 1);
+    fz_pixmap *image = fz_new_pixmap(d->ctx, csp, width, height, nullptr, 1);
     fz_clear_pixmap_with_value(d->ctx, image, 0xff);
-    fz_device *device = fz_new_draw_device(d->ctx, NULL, image);
-    fz_run_page(d->ctx, d->page, device, &ctm, &cookie);
+    fz_device *device = fz_new_draw_device(d->ctx, fz_identity, image);
+    fz_run_page(d->ctx, d->page, device, ctm, &cookie);
     fz_drop_device(d->ctx, device);
 
     QImage img;
@@ -122,11 +110,13 @@ QImage Page::render(qreal width, qreal height) const
 
 QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
 {
-    fz_cookie cookie = { 0, 0, 0, 0, 0, 0 };
-    fz_stext_page *page = fz_new_stext_page(d->ctx, &fz_empty_rect);
-    fz_device *device = fz_new_stext_device(d->ctx, page, NULL);
-    fz_run_page(d->ctx, d->page, device, &fz_identity, &cookie);
+    fz_cookie cookie = {0, 0, 0, 0, 0};
+    fz_stext_page *page = fz_new_stext_page(d->ctx, fz_empty_rect);
+    fz_stext_options options{};
+    fz_device *device = fz_new_stext_device(d->ctx, page, &options);
+    fz_run_page(d->ctx, d->page, device, fz_identity, &cookie);
     fz_drop_device(d->ctx, device);
+
     if (cookie.errors) {
         fz_drop_stext_page(d->ctx, page);
         return QVector<TextBox *>();
@@ -141,7 +131,7 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
             bool hasText = false;
             for (fz_stext_char *ch = line->first_char; ch; ch = ch->next) {
                 const int text = ch->c;
-                TextBox *box = new TextBox(text, convert_fz_rect(ch->bbox, dpi));
+                TextBox *box = new TextBox(text, convert_fz_rect(fz_rect_from_quad(ch->quad), dpi));
                 boxes.append(box);
                 hasText = true;
             }

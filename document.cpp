@@ -224,7 +224,8 @@ QString Document::infoKey(const QByteArray &key) const
     pdf_obj *obj = pdf_dict_gets(d->ctx, d->info, key.constData());
     if (obj) {
         obj = pdf_resolve_indirect(d->ctx, obj);
-        char *value = pdf_to_utf8(d->ctx, obj);
+        char *value = pdf_to_str_buf(d->ctx, obj);
+
         if (value) {
             const QString res = QString::fromUtf8(value);
             fz_free(d->ctx, value);
