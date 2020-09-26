@@ -15,6 +15,8 @@ include(FeatureSummary)
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDEFrameworkCompilerSettings NO_POLICY_SCOPE)
+include(ECMEnableSanitizers)
+
 
 #TODO: find libmupdf with cmake
 find_package(Okular5 REQUIRED)
