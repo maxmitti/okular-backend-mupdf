@@ -33,7 +33,7 @@ QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
 {
     const int w = fz_pixmap_width(ctx, image);
     const int h = fz_pixmap_height(ctx, image);
-    QImage img(w, h, QImage::Format_ARGB32);
+    QImage img(w, h, QImage::Format_RGBA8888);
 
     if (img.bytesPerLine() == fz_pixmap_stride(ctx, image)) {
         memcpy(img.bits(), fz_pixmap_samples(ctx, image), img.sizeInBytes());
