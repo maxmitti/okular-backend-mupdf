@@ -30,6 +30,9 @@ find_package(jbig2dec REQUIRED)
 find_package(OpenJPEG REQUIRED)
 find_package(LCMS2 REQUIRED)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(Gumbo REQUIRED IMPORTED_TARGET gumbo)
+
 find_package(KF5 REQUIRED COMPONENTS
     CoreAddons
     I18n
@@ -60,6 +63,7 @@ target_link_libraries(okularGenerator_mupdf
     ${OPENJPEG_LIBRARIES}
     ${JBIG2DEC_LIBRARIES}
     ${LCMS2_LIBRARIES}
+    PkgConfig::Gumbo
 )
 include_directories(
     ${OPENJPEG_INCLUDE_DIRS}
