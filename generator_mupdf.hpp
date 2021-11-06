@@ -17,6 +17,8 @@
 #include <okular/core/sourcereference.h>
 #include <okular/core/version.h>
 
+#include <QBitArray>
+
 class MuPDFGenerator : public Okular::Generator
 {
     Q_OBJECT
@@ -42,6 +44,7 @@ protected:
 private:
     QMuPDF::Document m_pdfdoc;
     Okular::DocumentSynopsis *m_synopsis;
+    QBitArray rectsGenerated;
 };
 
 #endif

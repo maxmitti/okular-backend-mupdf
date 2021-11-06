@@ -160,4 +160,31 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     return boxes;
 }
 
+QVector<Link> Page::links(const QSizeF &dpi) const
+{
+    QVector<Link> ret;
+    const auto deleter = [this](fz_link* link) { fz_drop_link(d->ctx, link); };
+    std::unique_ptr<fz_link, decltype(deleter)> links{fz_load_links(d->ctx, d->page), deleter};
+
+    const auto pageSize = size(dpi);
+
+    for (fz_link* link = links.get(); link; link = link->next)
+    {
+        const auto linkRect = convert_fz_rect(link->rect, dpi);
+        QRectF normalizedRect{linkRect.left() / pageSize.width(), linkRect.top() / pageSize.height(), linkRect.width() / pageSize.width(), linkRect.height() / pageSize.height()};
+        if (fz_is_external_link(d->ctx, link->uri))
+        {
+            ret.push_back({link->uri, std::move(normalizedRect)});
+        }
+        else
+        {
+            float xp = 0, yp = 0;
+            fz_location location = fz_resolve_link(d->ctx, d->doc, link->uri, &xp, &yp);
+            ret.push_back({location.page, xp / pageSize.width(), yp / pageSize.height(), std::move(normalizedRect)});
+        }
+    }
+
+    return ret;
+}
+
 } // namespace QMuPDF

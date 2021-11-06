@@ -25,6 +25,19 @@ namespace QMuPDF
 
 class TextBox;
 
+struct Link
+{
+  bool external;
+  std::string uri;
+  int page;
+  qreal x;
+	qreal y;
+  QRectF rect;
+
+  Link(const std::string& uri, const QRectF& rect) noexcept : external{true}, uri{uri}, rect{rect} {}
+  Link(int page, qreal x, qreal y, const QRectF& rect) noexcept : external{false}, page{page}, x{x}, y{y}, rect{rect} {}
+};
+
 class Page
 {
 public:
@@ -37,6 +50,7 @@ public:
     qreal duration() const;
     QImage render(qreal width, qreal height) const;
     QVector<TextBox *> textBoxes(const QSizeF &dpi) const;
+    QVector<Link> links(const QSizeF &dpi) const;
 
 private:
     Page();

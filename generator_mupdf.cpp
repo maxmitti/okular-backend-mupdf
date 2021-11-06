@@ -10,6 +10,7 @@
 #include "generator_mupdf.hpp"
 #include "page.hpp"
 
+#include <okular/core/action.h>
 #include <okular/core/page.h>
 #include <okular/core/textpage.h>
 
@@ -56,6 +57,7 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(
         okularPage->setDuration(page.duration());
         pages.append(okularPage);
     }
+    rectsGenerated.fill(false, m_pdfdoc.pageCount());
 
     return Okular::Document::OpenSuccess;
 }
@@ -150,11 +152,49 @@ const Okular::DocumentSynopsis *MuPDFGenerator::generateDocumentSynopsis()
     return m_synopsis;
 }
 
+Okular::Action *createLink(const QMuPDF::Link& link)
+{
+    if (link.external)
+    {
+        return new Okular::BrowseAction{QString::fromUtf8(link.uri.c_str())};
+    }
+    else
+    {
+        Okular::DocumentViewport vp(link.page);
+        vp.rePos.pos = Okular::DocumentViewport::TopLeft;
+        vp.rePos.normalizedX = link.x;
+        vp.rePos.normalizedY = link.y;
+        vp.rePos.enabled = true;
+        return new Okular::GotoAction{QString{}, vp};
+    }
+}
+
+static QLinkedList<Okular::ObjectRect *> generateLinks(const QVector<QMuPDF::Link> &links)
+{
+    QLinkedList<Okular::ObjectRect *> ret;
+    for (const auto& link : links) {
+        const auto& linkArea = link.rect;
+        double nl = linkArea.left(), nt = linkArea.top(), nr = linkArea.right(), nb = linkArea.bottom();
+        // create the rect using normalized coords and attach the Okular::Link to it
+        Okular::ObjectRect *rect = new Okular::ObjectRect(nl, nt, nr, nb, false, Okular::ObjectRect::Action, createLink(link));
+        // add the ObjectRect to the container
+        ret.push_front(rect);
+    }
+    return ret;
+}
+
 QImage MuPDFGenerator::image(Okular::PixmapRequest *request)
 {
     QMutexLocker locker(userMutex());
-    QMuPDF::Page page = m_pdfdoc.page(request->page()->number());
+    const auto okularPage = request->page();
+    const auto pageNumber = okularPage->number();
+    QMuPDF::Page page = m_pdfdoc.page(pageNumber);
     QImage image = page.render(request->width(), request->height());
+    if (!rectsGenerated.at(pageNumber))
+    {
+        okularPage->setObjectRects(generateLinks(page.links(dpi())));
+        rectsGenerated[pageNumber] = true;
+    }
     return image;
 }
 
